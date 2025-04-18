@@ -72,7 +72,7 @@
       }
 
       try {
-        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
+        const res = await fetch("https://corsproxy.io/?https://api.exchangerate.host/latest?base=USD&symbols=KRW");
         const data = await res.json();
         const rate = data.rates.KRW;
         const now = new Date();
@@ -81,7 +81,7 @@
         document.getElementById("krwResult").innerText = `${krw} 원`;
         document.getElementById("rateTime").innerText = `1 USD = ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
       } catch (e) {
-        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결을 확인해주세요.");
+        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결 또는 API 상태를 확인해주세요.");
       }
     }
   </script>
