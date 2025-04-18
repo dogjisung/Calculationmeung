@@ -1,75 +1,25 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>계산멍🐶 환율 계산기</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      padding: 20px;
-      background: #f0f0f0;
-      margin: 0;
+<script>
+  async function convert() {
+    const usd = parseFloat(document.getElementById("usdInput").value);
+    if (isNaN(usd)) {
+      alert("숫자를 입력해주세요!");
+      return;
     }
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h2 { margin-top: 0; }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    .timestamp {
-      font-size: 13px;
-      color: gray;
-      margin-top: 10px;
-    }
-    .icon {
-      width: 100px;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <img src="https://cdn.openai.com/chatgpt/image-gen/output/c44e2ebf-6a4f-4291-a3be-f6d89ef80a79.png" class="icon" alt="계산멍 아이콘">
-    <h2>계산멍🐶<br>환율 계산기 (USD → KRW)</h2>
-    <input id="usdInput" type="number" placeholder="USD 금액 입력" />
-    <button onclick="convert()">계산하기</button>
-    <div class="result" id="krwResult"></div>
-    <div class="timestamp" id="rateTime"></div>
-  </div>
 
-  <script>
-    async function convert() {
-      const usd = parseFloat(document.getElementById("usdInput").value);
-      if (isNaN(usd)) {
-        alert("숫자를 입력해주세요!");
-        return;
-      }
+    try {
+      const apiURL = "https://api.exchangerate.host/latest?base=USD&symbols=KRW";
+      const proxyURL = "https://broad-breeze-4af6.jane785714.workers.dev/?url=" + encodeURIComponent(apiURL);
 
-      try {
-        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
-        const data = await res.json();
-        const rate = data.rates.KRW;
+      const res = await fetch(proxyURL);
+      const data = await res.json();
+      const rate = data.rates.KRW;
+      const now = new Date();
+
+      const krw = Math.round(usd * rate).toLocaleString();
+      document.getElementById("krwResult").innerText = `${krw} 원`;
+      document.getElementById("rateTime").innerText = `1 USD ≒ ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
+    } catch (e) {
+      alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결 또는 API 상태를 확인해주세요.");
+    }
+  }
+</script>
