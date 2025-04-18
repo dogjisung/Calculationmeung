@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>계산멍🐶 - 환율 계산기</title>
+  <title>계산멍🐶 환율 계산기</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
     body {
@@ -70,21 +70,6 @@
       }
 
       try {
-        const apiURL = "https://api.frankfurter.app/latest?from=USD&to=KRW";
-        const proxyURL = "https://broad-breeze-4af6.jane785714.workers.dev/?url=" + encodeURIComponent(apiURL);
-
-        const res = await fetch(proxyURL);
-        const data = JSON.parse(await res.text());
+        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
+        const data = await res.json();
         const rate = data.rates.KRW;
-        const now = new Date();
-
-        const krw = Math.round(usd * rate).toLocaleString();
-        document.getElementById("krwResult").innerText = `${krw} 원`;
-        document.getElementById("rateTime").innerText = `1 USD ≒ ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
-      } catch (e) {
-        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결 또는 API 상태를 확인해주세요.");
-      }
-    }
-  </script>
-</body>
-</html>
