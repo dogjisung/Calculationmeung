@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>계산몬🐶 - 환율 계산기</title>
+  <title>계산멍🐶 환율 계산기</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
     body {
@@ -53,8 +53,8 @@
 </head>
 <body>
   <div class="container">
-    <img src="https://cdn.openai.com/chatgpt/image-gen/output/c44e2ebf-6a4f-4291-a3be-f6d89ef80a79.png" class="icon" alt="계산몬 아이콘">
-    <h2>계산몬🐶<br>환율 계산기 (USD → KRW)</h2>
+    <img src="https://cdn.openai.com/chatgpt/image-gen/output/c44e2ebf-6a4f-4291-a3be-f6d89ef80a79.png" class="icon" alt="계산멍 아이콘">
+    <h2>계산멍🐶<br>환율 계산기 (USD → KRW)</h2>
     <input id="usdInput" type="number" placeholder="USD 금액 입력" />
     <button onclick="convert()">계산하기</button>
     <div class="result" id="krwResult"></div>
@@ -70,17 +70,19 @@
       }
 
       try {
-        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
-        if (!res.ok) throw new Error("API 불능");
-        const data = await res.json();
+        const apiURL = "https://api.frankfurter.app/latest?from=USD&to=KRW";
+        const proxyURL = "https://broad-breeze-4af6.jane785714.workers.dev/?url=" + encodeURIComponent(apiURL);
+
+        const res = await fetch(proxyURL);
+        const data = JSON.parse(await res.text());
         const rate = data.rates.KRW;
         const now = new Date();
 
         const krw = Math.round(usd * rate).toLocaleString();
         document.getElementById("krwResult").innerText = `${krw} 원`;
-        document.getElementById("rateTime").innerText = `1 USD = ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
+        document.getElementById("rateTime").innerText = `1 USD ≒ ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
       } catch (e) {
-        alert("\uD658\uC728 \uC815\uBCF4\uB97C \uAC00\uC838\uC624\uB294 \uB370 \uC2E4\uD328\uD588\uC5B4\uC694. \uC778\uD130\uB137 \uC5F0\uACB0 \uB610\uB294 API \uC0C1\uD0DC\uB97C \uD655\uC778\uD574\uC8FC\uC138\uC694.");
+        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결 또는 API 상태를 확인해주세요.");
       }
     }
   </script>
