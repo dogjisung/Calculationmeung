@@ -21,9 +21,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       text-align: center;
     }
-    h2 {
-      margin-top: 0;
-    }
+    h2 { margin-top: 0; }
     input, button {
       width: 100%;
       padding: 12px;
@@ -76,7 +74,7 @@
         const proxyURL = "https://broad-breeze-4af6.jane785714.workers.dev/?url=" + encodeURIComponent(apiURL);
 
         const res = await fetch(proxyURL);
-        const data = await res.json();
+        const data = JSON.parse(await res.text());
         const rate = data.rates.KRW;
         const now = new Date();
 
