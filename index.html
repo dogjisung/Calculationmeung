@@ -74,7 +74,6 @@
       try {
         const apiURL = "https://api.exchangerate.host/latest?base=USD&symbols=KRW";
         const proxyURL = "https://odd-paper-c528.jane785714.workers.dev/?url=" + encodeURIComponent(apiURL);
-
         const res = await fetch(proxyURL);
         const data = await res.json();
         const rate = data.rates.KRW;
