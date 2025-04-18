@@ -6,10 +6,10 @@
   <title>계산멍🐶 - 환율 계산기</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
-    body { 
-      font-family: 'Arial', sans-serif; 
-      padding: 20px; 
-      background: #f0f0f0; 
+    body {
+      font-family: 'Arial', sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
       margin: 0;
     }
     .container {
@@ -72,8 +72,9 @@
       }
 
       try {
-        const res = await fetch("https://corsproxy.io/?https://api.exchangerate.host/latest?base=USD&symbols=KRW");
-        const data = await res.json();
+        const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://api.exchangerate.host/latest?base=USD&symbols=KRW"));
+        const result = await res.json();
+        const data = JSON.parse(result.contents);
         const rate = data.rates.KRW;
         const now = new Date();
 
