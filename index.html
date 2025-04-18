@@ -72,9 +72,8 @@
       }
 
       try {
-        const res = await fetch("https://api.allorigins.win/get?url=" + encodeURIComponent("https://api.exchangerate.host/latest?base=USD&symbols=KRW"));
-        const result = await res.json();
-        const data = JSON.parse(result.contents);
+        const res = await fetch("https://corsproxy.io/?" + encodeURIComponent("https://api.exchangerate.host/latest?base=USD&symbols=KRW"));
+        const data = await res.json();
         const rate = data.rates.KRW;
         const now = new Date();
 
