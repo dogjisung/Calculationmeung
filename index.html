@@ -120,22 +120,18 @@
       <button data-action="back">←</button>
       <button data-action="divide">÷</button>
       <button data-action="multiply">×</button>
-
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="minus">−</button>
-
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="plus">＋</button>
-
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-key="0" style="grid-column: span 2;">0</button>
-
       <button data-action="equal">＝</button>
       <button data-action="decimal">.</button>
     </div>
@@ -151,17 +147,24 @@
 
     async function fetchAndConvert() {
       try {
-        // ★ 추가된 캐시 버스터 (_=timestamp)
-        const apiUrl = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW&_=' + Date.now();
-        const res = await fetch(apiUrl);
+        // 1) 수식 평가: ×,÷,− 기호를 JS 연산자(*)/(−)로 교체
+        const expr = inputStr
+          .replace(/×/g,'*')
+          .replace(/÷/g,'/')
+          .replace(/−/g,'-');
+        const amount = expr ? Function('return ' + expr)() : 0;
+
+        // 2) 바로 convert 엔드포인트 호출 (키 불필요)
+        const url = `https://api.exchangerate.host/convert?from=USD&to=KRW&amount=${amount}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const json = await res.json();
-        if (typeof json.rates?.KRW !== 'number') throw new Error('API 형식 이상');
+        if (typeof json.result !== 'number') throw new Error('API 형식 이상');
 
-        const rate = json.rates.KRW;
-        const kr = eval(inputStr) * rate;
-        document.getElementById('krwValue').innerText = Math.round(kr).toLocaleString();
-        document.getElementById('rateTime').innerText =
+        // 3) 결과 표시
+        document.getElementById('krwValue').innerText = 
+          Math.round(json.result).toLocaleString();
+        document.getElementById('rateTime').innerText = 
           '조회 시간: ' + new Date().toLocaleString();
       } catch (e) {
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
