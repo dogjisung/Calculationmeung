@@ -6,37 +6,118 @@
   <title>환율계산멍🐶</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
-    body { font-family: Arial, sans-serif; padding:20px; background:#f0f0f0; margin:0 }
+    /*--- 공통 레이아웃 ---*/
+    body {
+      margin: 0;
+      background: #f0f2f5;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
     .container {
-      max-width:400px; margin:auto; background:#fff;
-      padding:20px; border-radius:12px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.1);
-      text-align:center;
+      width: 100%;
+      max-width: 360px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 20px;
     }
-    h2 { margin-top:0 }
-    input, button {
-      width:100%; padding:12px; margin-top:10px;
-      font-size:16px; border-radius:6px; border:1px solid #ccc;
+    h1 {
+      margin: 0 0 16px;
+      font-size: 20px;
+      text-align: center;
     }
+
+    /*--- 카드형 패널 ---*/
+    .panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .panel .left {
+      display: flex;
+      align-items: center;
+    }
+    .flag {
+      font-size: 28px;
+      margin-right: 8px;
+    }
+    .code {
+      font-size: 16px;
+      color: #555;
+      width: 40px;
+    }
+    .amount-input {
+      font-size: 18px;
+      border: none;
+      text-align: right;
+      width: 100px;
+      background: transparent;
+      outline: none;
+    }
+    .amount-output {
+      font-size: 18px;
+      font-weight: bold;
+      color: #222;
+    }
+
+    /*--- 버튼 ---*/
     button {
-      background:#4CAF50; color:#fff; border:none; cursor:pointer;
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      background-color: #4CAF50;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
     }
-    .result { margin-top:20px; font-size:20px; font-weight:bold }
-    .timestamp { font-size:13px; color:gray; margin-top:10px }
-    .icon { width:100px; margin-bottom:10px }
+    button:active {
+      background-color: #429b45;
+    }
+
+    /*--- 타임스탬프 ---*/
+    .timestamp {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #888;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <img
-      src="https://cdn.openai.com/chatgpt/image-gen/output/c44e2ebf-6a4f-4291-a3be-f6d89ef80a79.png"
-      class="icon" alt="계산멍 아이콘"
-    >
-    <h2>환율계산멍🐶<br>환율 계산기 (USD → KRW)</h2>
-    <input id="usdInput" type="number" placeholder="USD 금액 입력" />
+    <h1>환율계산멍🐶</h1>
+
+    <!-- USD 입력 패널 -->
+    <div class="panel">
+      <div class="left">
+        <span class="flag">🇺🇸</span>
+        <span class="code">USD</span>
+      </div>
+      <input id="usdInput" class="amount-input" type="number" placeholder="0" />
+    </div>
+
+    <!-- KRW 결과 패널 -->
+    <div class="panel">
+      <div class="left">
+        <span class="flag">🇰🇷</span>
+        <span class="code">KRW</span>
+      </div>
+      <div id="krwResult" class="amount-output">0</div>
+    </div>
+
     <button onclick="convert()">계산하기</button>
-    <div class="result" id="krwResult"></div>
-    <div class="timestamp" id="rateTime"></div>
+    <div id="rateTime" class="timestamp"></div>
   </div>
 
   <script>
@@ -46,25 +127,18 @@
         alert("숫자를 입력해주세요!");
         return;
       }
-
       try {
-        // Frankfurter API (키 없이 바로 사용 가능)
-        const res = await fetch(
-          "https://api.frankfurter.app/latest?from=USD&to=KRW"
-        );
+        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
         const data = await res.json();
         const rate = data.rates.KRW;
-        const now  = new Date();
+        const now = new Date();
 
         const krw = Math.round(usd * rate).toLocaleString();
-        document.getElementById("krwResult").innerText =
-          `${krw} 원`;
+        document.getElementById("krwResult").innerText = krw;
         document.getElementById("rateTime").innerText =
           `1 USD = ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
-
       } catch (e) {
-        console.error(e);
-        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결 또는 API 상태를 확인해주세요.");
+        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결을 확인해주세요.");
       }
     }
   </script>
