@@ -2,188 +2,209 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>환율계산멍🐶</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
+    /* --- 레이아웃 --- */
     body {
-      margin: 0; padding: 20px;
+      margin: 0;
       background: #f0f2f5;
-      font-family: 'Arial',sans-serif;
-      display: flex; justify-content: center; align-items: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       min-height: 100vh;
+      font-family: 'Arial', sans-serif;
     }
     .container {
-      width: 360px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    h1 {
-      margin: 16px 0 0;
-      text-align: center;
-      font-size: 24px;
-    }
-    .display {
-      padding: 12px;
-      background: #fafafa;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .disp-usd, .disp-krw {
-      background: #fff;
-      border-radius: 8px;
-      padding: 12px;
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 20px;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .disp-usd .flag, .disp-krw .flag {
-      font-size: 28px; margin-right: 8px;
-    }
-    .label {
-      text-align: center; color: #888; font-size: 14px; margin-top: -6px;
-    }
-    .timestamp {
-      text-align: center; color: #888; font-size: 12px;
-      margin-top: -4px; margin-bottom: 8px;
-    }
-    .keys {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: 56px;
-      gap: 8px;
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 16px;
     }
-    .keys button {
+    h1 {
+      text-align: center;
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+    /* --- 통화 디스플레이 --- */
+    .display {
+      margin-bottom: 12px;
+    }
+    .panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      margin-bottom: 4px;
+    }
+    .panel .left {
+      display: flex;
+      align-items: center;
+    }
+    .flag {
+      font-size: 28px;
+      margin-right: 8px;
+    }
+    .code {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .amount-output {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .label {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    #timeStamp {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    /* --- 버튼 패드 --- */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .keypad button {
+      padding: 16px;
       font-size: 18px;
       border: none;
       border-radius: 8px;
-      background: #eee;
       cursor: pointer;
-      transition: background 0.2s;
+      background: #e0e0e0;
+      color: #000;
     }
-    .keys button.operator { background: #ffd966; }
-    .keys button.clear    { background: #f44336; color: #fff; }
-    .keys button.equal    {
-      background: #4caf50;
-      color: #fff;
-      grid-column: 2 / span 2;
-    }
-    .keys button:active { background: #ddd; }
+    .btn-clear { background: #f44336; color: #fff; }
+    .btn-back  { background: #ddd; }
+    .btn-op    { background: #ffd54f; }
+    .btn-equal { background: #4caf50; color: #fff; grid-column: span 2; }
+    .btn-zero  { grid-column: span 2; }
+    .btn-active:active { opacity: 0.8; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
     <div class="display">
-      <div class="disp-usd">
-        <div><span class="flag">🇺🇸</span> USD</div>
-        <div id="usdDisplay">0</div>
+      <!-- USD 표시 -->
+      <div class="panel">
+        <div class="left">
+          <span class="flag">🇺🇸</span>
+          <span class="code">USD</span>
+        </div>
+        <div id="usdDisplay" class="amount-output">0</div>
       </div>
       <div class="label">USD 입력</div>
-      <div class="disp-krw">
-        <div><span class="flag">🇰🇷</span> KRW</div>
-        <div id="krwDisplay">0</div>
+
+      <!-- KRW 표시 -->
+      <div class="panel">
+        <div class="left">
+          <span class="flag">🇰🇷</span>
+          <span class="code">KRW</span>
+        </div>
+        <div id="krwDisplay" class="amount-output">0</div>
       </div>
       <div class="label">환산 결과</div>
-      <!-- 다시 추가된 타임스탬프 -->
-      <div id="timeStamp" class="timestamp"></div>
+
+      <!-- 타임스탬프 -->
+      <div id="timeStamp"></div>
     </div>
 
-    <div class="keys">
-      <button class="clear" onclick="onClear()">C</button>
-      <button onclick="onBack()">←</button>
-      <button class="operator" onclick="onOp('/')">÷</button>
-      <button class="operator" onclick="onOp('*')">×</button>
+    <!-- 숫자/연산자 버튼 -->
+    <div class="keypad">
+      <button class="btn-clear"     data-action="clear">C</button>
+      <button class="btn-back"      data-action="back">&larr;</button>
+      <button class="btn-op"        data-value="/">÷</button>
+      <button class="btn-op"        data-value="*">×</button>
 
-      <button onclick="onNum('7')">7</button>
-      <button onclick="onNum('8')">8</button>
-      <button onclick="onNum('9')">9</button>
-      <button class="operator" onclick="onOp('-')">−</button>
+      <button data-value="7">7</button>
+      <button data-value="8">8</button>
+      <button data-value="9">9</button>
+      <button class="btn-op"        data-value="-">−</button>
 
-      <button onclick="onNum('4')">4</button>
-      <button onclick="onNum('5')">5</button>
-      <button onclick="onNum('6')">6</button>
-      <button class="operator" onclick="onOp('+')">+</button>
+      <button data-value="4">4</button>
+      <button data-value="5">5</button>
+      <button data-value="6">6</button>
+      <button class="btn-op"        data-value="+">＋</button>
 
-      <button onclick="onNum('1')">1</button>
-      <button onclick="onNum('2')">2</button>
-      <button onclick="onNum('3')">3</button>
-      <button onclick="onNum('0')">0</button>
+      <button data-value="1">1</button>
+      <button data-value="2">2</button>
+      <button data-value="3">3</button>
+      <button class="btn-zero"      data-value="0">0</button>
 
-      <button class="equal" onclick="onConvert()">=</button>
-      <button onclick="onNum('.')">.</button>
+      <button data-value=".">.</button>
+      <button class="btn-equal"     data-action="equal">=</button>
     </div>
   </div>
 
   <script>
-    let prev = null, op = null, curr = '0';
-    const usdDisp   = document.getElementById('usdDisplay');
-    const krwDisp   = document.getElementById('krwDisplay');
-    const timeStamp = document.getElementById('timeStamp');
+    let expr = "";
+    const usdDisp = document.getElementById("usdDisplay");
+    const krwDisp = document.getElementById("krwDisplay");
+    const timeStamp = document.getElementById("timeStamp");
 
-    function updateUSD() { usdDisp.innerText = curr; }
-
-    function onNum(d) {
-      if (curr==='0' && d!=='.') curr = d;
-      else if (d==='.' && curr.includes('.')) return;
-      else curr += d;
-      updateUSD();
+    function updateUsdDisplay() {
+      usdDisp.innerText = expr || "0";
     }
 
-    function onOp(o) {
-      if (op && prev!==null) prev = String(eval(prev + op + curr));
-      else prev = curr;
-      op = o; curr = '0'; updateUSD();
-    }
-
-    function onBack() {
-      curr = curr.length>1 ? curr.slice(0,-1) : '0';
-      updateUSD();
-    }
-
-    function onClear() {
-      prev = null; op = null; curr = '0';
-      updateUSD(); krwDisp.innerText = '0';
-      timeStamp.innerText = '';
-    }
-
-    async function onConvert() {
-      // 내부 계산 먼저
-      if (op && prev!==null) {
-        curr = String(eval(prev + op + curr));
-        prev = null; op = null;
-        updateUSD();
-      }
-      // 환율 호출
+    async function fetchAndConvert(value) {
       try {
-        const res  = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW');
-        if (!res.ok) throw new Error(res.status);
-        const json = await res.json();
-        const rate = json.rates.KRW;
-        const krw  = (parseFloat(curr)*rate)
-                        .toLocaleString('ko-KR',{maximumFractionDigits:0});
+        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
+        const data = await res.json();
+        const rate = data.rates.KRW;
+        const krw = Math.round(value * rate).toLocaleString();
         krwDisp.innerText = krw;
-        // 타임스탬프 표시 (ex. 2025. 4. 19. 16:23:10)
+
         const now = new Date();
-        const fmt = now.getFullYear() +'. '
-                  + (now.getMonth()+1) +'. '
-                  + now.getDate() +'. '
-                  + now.getHours() +':'
-                  + now.getMinutes().toString().padStart(2,'0') +':'
-                  + now.getSeconds().toString().padStart(2,'0');
-        timeStamp.innerText = '기준: ' + fmt;
+        const fmt = now.toLocaleString(); 
+        timeStamp.innerText = "기준: " + fmt;
       } catch (e) {
-        console.error(e);
-        alert(
-          '환율 정보를 가져오는 데 실패했어요.\n'
-          + '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
-        );
+        alert("환율 정보를 가져오는 데 실패했어요.\n인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.");
       }
     }
 
-    updateUSD();
+    document.querySelectorAll(".keypad button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.value, act = btn.dataset.action;
+
+        if (v != null) {
+          expr += v;
+          updateUsdDisplay();
+        } else if (act === "clear") {
+          expr = "";
+          updateUsdDisplay();
+          krwDisp.innerText = "0";
+          timeStamp.innerText = "";
+        } else if (act === "back") {
+          expr = expr.slice(0, -1);
+          updateUsdDisplay();
+        } else if (act === "equal") {
+          let usd;
+          try {
+            usd = eval(expr || "0");
+          } catch {
+            usd = 0;
+          }
+          expr = String(usd);
+          updateUsdDisplay();
+          fetchAndConvert(usd);
+        }
+      });
+    });
+
+    // 처음 로드 시
+    updateUsdDisplay();
   </script>
 </body>
 </html>
