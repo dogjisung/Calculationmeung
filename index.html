@@ -1,92 +1,72 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산멍🐶</title>
   <style>
-    /* ========== 베이스 레이아웃 ========== */
+    /* --- (기존에 쓰시던 CSS를 여기에 붙여넣으세요) --- */
     body {
       margin: 0;
       background: #f0f2f5;
       font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
     }
     .container {
-      width: 100%;
-      max-width: 360px;
-      background: white;
-      border-radius: 16px;
+      width: 100%; max-width: 360px;
+      background: white; border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.1);
       padding: 20px;
     }
-    h1 {
-      text-align: center;
-      margin: 0 0 16px;
-      font-size: 24px;
-    }
-
-    /* ========== 환율 패널 ========== */
+    h1 { text-align: center; margin: 0 0 16px; font-size: 24px; }
     .rate-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #fafafa;
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 12px;
+      position: relative;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fafafa; border-radius: 12px;
+      padding: 12px 16px; margin-bottom: 12px;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
     }
     .rate-panel .flag { font-size: 28px; margin-right: 8px; }
     .rate-panel .code { font-size: 16px; color: #555; margin-right: auto; }
     .rate-panel .amount { font-size: 20px; font-weight: bold; color: #222; }
+    /* 스왑 버튼 */
+    .swap-btn {
+      position: absolute;
+      right: 10px; top: 50%;
+      transform: translateY(-50%);
+      border: none; background: none; cursor: pointer;
+      font-size: 18px; color: #777;
+    }
+    .swap-btn:hover { color: #333; }
 
-    /* ========== 조회 시간 스탬프 ========== */
     .stamp {
-      text-align: center;
-      font-size: 12px;
-      color: #888;
+      text-align: center; font-size: 12px; color: #888;
       margin-bottom: 12px;
     }
 
-    /* ========== 키패드 그리드 ========== */
     .keypad {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4,1fr);
       grid-gap: 8px;
     }
     .keypad button {
-      padding: 12px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      background: #e0e0e0;
-      cursor: pointer;
+      padding: 12px; font-size: 18px;
+      border: none; border-radius: 8px;
+      background: #e0e0e0; cursor: pointer;
     }
-    .keypad button[data-action="clear"] { background: #f74c3c; color: white; }
-    .keypad button[data-action="back"],
-    .keypad button#swap              { background: #ddd; }
+    .keypad button[data-action="clear"] { background: #e74c3c; color: white; }
+    .keypad button[data-action="back"]  { background: #ddd; }
+    .keypad button[data-action="swap"]  { background: #ddd; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
     .keypad button[data-action="plus"] {
-      background: #f1c40f;
-      color: white;
+      background: #f1c40f; color: white;
     }
     .keypad button[data-action="equal"] {
-      background: #4caf50;
-      color: white;
+      background: #2ecc71; color: white;
       grid-column: span 2;
-    }
-
-    /* ========== 반응형 ========== */
-    @media (max-width: 400px) {
-      .container { padding: 16px; }
-      .keypad button { font-size: 16px; padding: 10px; }
     }
   </style>
 </head>
@@ -94,18 +74,18 @@
   <div class="container">
     <h1>환율계산멍🐶</h1>
 
-    <!-- 1번 패널 -->
-    <div class="rate-panel" id="panel1">
-      <span class="flag" id="flag1">🇺🇸</span>
-      <span class="code"  id="code1">USD</span>
-      <span class="amount" id="amt1">0</span>
+    <!-- 1st 통화 -->
+    <div class="rate-panel">
+      <span id="flag1" class="flag">🇺🇸</span>
+      <span id="code1" class="code">USD</span>
+      <span id="amt1"  class="amount">0</span>
+      <button id="swap" class="swap-btn">⟳</button>
     </div>
-
-    <!-- 2번 패널 -->
-    <div class="rate-panel" id="panel2">
-      <span class="flag" id="flag2">🇰🇷</span>
-      <span class="code"  id="code2">KRW</span>
-      <span class="amount" id="amt2">0</span>
+    <!-- 2nd 통화 -->
+    <div class="rate-panel">
+      <span id="flag2" class="flag">🇰🇷</span>
+      <span id="code2" class="code">KRW</span>
+      <span id="amt2"  class="amount">0</span>
     </div>
 
     <div id="rateTime" class="stamp">조회 시간: --</div>
@@ -113,7 +93,7 @@
     <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
-      <button id="swap">⟳</button>
+      <button data-action="swap">⟳</button>
       <button data-action="divide">÷</button>
 
       <button data-key="7">7</button>
@@ -137,73 +117,82 @@
     </div>
   </div>
 
-<!-- 생략… 위쪽은 그대로 두시고 아래 <script> 부분만 교체해주세요 -->
-<script>
-(function(){
-  let input  = '';
-  let base   = 'USD', target = 'KRW';
+  <script>
+  (function(){
+    let input  = '';
+    let base   = 'USD', target = 'KRW';
 
-  const flag1 = document.getElementById('flag1'),
-        code1 = document.getElementById('code1'),
-        amt1  = document.getElementById('amt1'),
-        flag2 = document.getElementById('flag2'),
-        code2 = document.getElementById('code2'),
-        amt2  = document.getElementById('amt2'),
-        rateTime = document.getElementById('rateTime'),
-        swapBtn  = document.getElementById('swap');
+    const flag1    = document.getElementById('flag1'),
+          code1    = document.getElementById('code1'),
+          amt1     = document.getElementById('amt1'),
+          flag2    = document.getElementById('flag2'),
+          code2    = document.getElementById('code2'),
+          amt2     = document.getElementById('amt2'),
+          rateTime = document.getElementById('rateTime'),
+          keypad   = document.querySelector('.keypad'),
+          swapBtn  = document.getElementById('swap');
 
-  function updateInputDisplay() {
-    amt1.innerText = input || '0';
-  }
-
-  async function fetchAndConvert() {
-    try {
-      // ▶ 프록시 없이 직접 호출
-      const API_URL = `https://api.exchangerate.host/latest?base=${base}&symbols=${target}`;
-      const res     = await fetch(API_URL);
-      if (!res.ok) throw new Error(res.status);
-      const json    = await res.json();
-
-      // json.rates[target] 이 반드시 숫자인지 확인
-      const rate = json.rates?.[target];
-      if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
-
-      const result = (eval(input || '0') * rate);
-      amt2.innerText = Math.round(result).toLocaleString();
-      rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
-
-    } catch (e) {
-      alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+    function updateInput() {
+      amt1.innerText = input || '0';
     }
-  }
 
-  // 스왑
-  swapBtn.addEventListener('click', () => {
-    [base,target] = [target,base];
-    [flag1.textContent,flag2.textContent] = [flag2.textContent,flag1.textContent];
-    [code1.textContent,code2.textContent] = [code2.textContent,code1.textContent];
-    [amt1.textContent,amt2.textContent]     = [amt2.textContent,amt1.textContent];
-    updateInputDisplay();
-  });
+    async function fetchAndConvert() {
+      try {
+        const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${target}`;
+        const res    = await fetch(apiUrl);
+        if (!res.ok) throw new Error(res.status);
+        const json   = await res.json();
+        const rate   = json.rates?.[target];
+        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-  // 키패드
-  document.querySelector('.keypad').addEventListener('click', e => {
-    if (e.target.tagName!=='BUTTON') return;
-    const action = e.target.dataset.action, key = e.target.dataset.key;
-
-    if (action==='clear') { input=''; updateInputDisplay(); return; }
-    if (action==='back')  { input=input.slice(0,-1); updateInputDisplay(); return; }
-    if (action==='decimal'){ if (!input.includes('.')) input+='.'; updateInputDisplay(); return; }
-    if (/^(divide|multiply|minus|plus)$/.test(action)) {
-      input+=e.target.textContent; updateInputDisplay(); return;
+        const result = (eval(input || '0') * rate);
+        amt2.innerText    = Math.round(result).toLocaleString();
+        rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
+      } catch (e) {
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+      }
     }
-    if (key) { input+=key; updateInputDisplay(); return; }
-    if (action==='equal') fetchAndConvert();
-  });
 
-  // 초기
-  updateInputDisplay();
-})();
-</script>
+    // 키패드 클릭 핸들러
+    keypad.addEventListener('click', e=>{
+      if (e.target.tagName!=='BUTTON') return;
+      const action = e.target.dataset.action,
+            key    = e.target.dataset.key;
+
+      switch(action) {
+        case 'clear':  input = ''; updateInput(); break;
+        case 'back':   input = input.slice(0,-1); updateInput(); break;
+        case 'decimal':
+          if (!input.includes('.')) input+='.';
+          updateInput(); break;
+        case 'divide':
+        case 'multiply':
+        case 'minus':
+        case 'plus':
+          input += e.target.textContent;
+          updateInput(); break;
+        case 'swap':
+          // 통화 스왑
+          [base,target] = [target,base];
+          [flag1.textContent,flag2.textContent] = [flag2.textContent,flag1.textContent];
+          [code1.textContent,code2.textContent] = [code2.textContent,code1.textContent];
+          [amt1.textContent,amt2.textContent]     = [amt2.textContent,amt1.textContent];
+          updateInput();
+          break;
+        case 'equal':
+          fetchAndConvert();
+          break;
+        default:
+          if (key) {
+            input += key;
+            updateInput();
+          }
+      }
+    });
+
+    // 초기 디스플레이
+    updateInput();
+  })();
+  </script>
 </body>
 </html>
