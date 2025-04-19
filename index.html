@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산멍🐶</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png" />
+  <link rel="icon"
+    href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png" />
   <style>
     /* --- 베이스 레이아웃 --- */
     body {
@@ -76,21 +77,21 @@
   <div class="container">
     <h1>환율계산멍🐶</h1>
 
-    <!-- USD 패널 -->
+    <!-- USD -->
     <div class="rate-panel">
       <span class="flag">🇺🇸</span>
       <span class="code">USD</span>
       <span id="usdValue" class="amount">0</span>
     </div>
 
-    <!-- KRW 패널 -->
+    <!-- KRW -->
     <div class="rate-panel">
       <span class="flag">🇰🇷</span>
       <span class="code">KRW</span>
       <span id="krwValue" class="amount">0</span>
     </div>
 
-    <!-- 조회 시각 -->
+    <!-- 타임스탬프 -->
     <div id="rateTime" class="stamp">기준: –</div>
 
     <!-- 키패드 -->
@@ -121,31 +122,25 @@
   </div>
 
   <script>
-    (function() {
-      // 1) 본인의 Worker 프록시 URL(맨 끝에 ?url= 까지)로 교체하세요.
-      const WORKER_PROXY_URL =
-        'https://broad-breeze-4af6.jane785714.workers.dev/?url=';
-      const API_URL = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
+    (function(){
+      const BASE_PATH = '/Calculationmeung';   // ← 서브폴더 배포면 '/Calculationmeung', 루트면 ''
+      const API_URL   = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
 
       let inputStr = '';
 
-      // 디스플레이 갱신
-      function updateDisplay() {
+      function updateDisplay(){
         document.getElementById('usdValue').innerText = inputStr || '0';
       }
 
-      // 환율 조회 & 계산
-      async function fetchAndConvert() {
+      async function fetchAndConvert(){
         try {
-          const proxy = WORKER_PROXY_URL + encodeURIComponent(API_URL);
-          const res   = await fetch(proxy);
+          const res   = await fetch(API_URL);
           const json  = await res.json();
           const rate  = json.rates.KRW;
           const result= eval(inputStr) * rate;
           document.getElementById('krwValue').innerText =
             Math.round(result).toLocaleString();
 
-          // 타임스탬프
           const now = new Date();
           document.getElementById('rateTime').innerText =
             '기준: ' + now.toLocaleString();
@@ -157,43 +152,20 @@
         }
       }
 
-      // 키패드 클릭 핸들러
       document.querySelector('.keypad').addEventListener('click', e => {
         if (e.target.tagName !== 'BUTTON') return;
-        const action = e.target.dataset.action;
-        const key    = e.target.dataset.key;
+        const a = e.target.dataset.action;
+        const k = e.target.dataset.key;
 
-        if (action === 'clear') {
-          inputStr = '';
-          updateDisplay();
-          return;
-        }
-        if (action === 'back') {
-          inputStr = inputStr.slice(0, -1);
-          updateDisplay();
-          return;
-        }
-        if (action === 'divide' ||
-            action === 'multiply' ||
-            action === 'minus' ||
-            action === 'plus') {
+        if (a==='clear')  { inputStr=''; updateDisplay(); return; }
+        if (a==='back')   { inputStr=inputStr.slice(0,-1); updateDisplay(); return; }
+        if (/^(divide|multiply|minus|plus)$/.test(a)) {
           inputStr += ' ' + e.target.textContent + ' ';
-          updateDisplay();
-          return;
+          updateDisplay(); return;
         }
-        if (action === 'decimal') {
-          inputStr += '.';
-          updateDisplay();
-          return;
-        }
-        if (key) {
-          inputStr += key;
-          updateDisplay();
-          return;
-        }
-        if (action === 'equal') {
-          fetchAndConvert();
-        }
+        if (a==='decimal'){ inputStr+='.'; updateDisplay(); return; }
+        if (k)           { inputStr+=k; updateDisplay(); return; }
+        if (a==='equal') { fetchAndConvert(); }
       });
     })();
   </script>
