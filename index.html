@@ -9,7 +9,7 @@
     body {
       margin: 0; padding: 20px;
       background: #f0f2f5;
-      font-family: 'Arial', sans-serif;
+      font-family: 'Arial',sans-serif;
       display: flex; justify-content: center; align-items: center;
       min-height: 100vh;
     }
@@ -44,6 +44,10 @@
     .label {
       text-align: center; color: #888; font-size: 14px; margin-top: -6px;
     }
+    .timestamp {
+      text-align: center; color: #888; font-size: 12px;
+      margin-top: -4px; margin-bottom: 8px;
+    }
     .keys {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -64,13 +68,11 @@
     .keys button.equal    {
       background: #4caf50;
       color: #fff;
-      /* “=”과 “0” 위치 바꾸기 위해 span 1칸씩 움직였습니다 */
       grid-column: 2 / span 2;
     }
     .keys button:active { background: #ddd; }
   </style>
 </head>
-
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
@@ -85,6 +87,8 @@
         <div id="krwDisplay">0</div>
       </div>
       <div class="label">환산 결과</div>
+      <!-- 다시 추가된 타임스탬프 -->
+      <div id="timeStamp" class="timestamp"></div>
     </div>
 
     <div class="keys">
@@ -108,7 +112,6 @@
       <button onclick="onNum('3')">3</button>
       <button onclick="onNum('0')">0</button>
 
-      <!-- “=” 과 “0” 자리 교환 -->
       <button class="equal" onclick="onConvert()">=</button>
       <button onclick="onNum('.')">.</button>
     </div>
@@ -116,38 +119,44 @@
 
   <script>
     let prev = null, op = null, curr = '0';
-    const usdDisp = document.getElementById('usdDisplay');
-    const krwDisp = document.getElementById('krwDisplay');
+    const usdDisp   = document.getElementById('usdDisplay');
+    const krwDisp   = document.getElementById('krwDisplay');
+    const timeStamp = document.getElementById('timeStamp');
 
     function updateUSD() { usdDisp.innerText = curr; }
+
     function onNum(d) {
       if (curr==='0' && d!=='.') curr = d;
       else if (d==='.' && curr.includes('.')) return;
       else curr += d;
       updateUSD();
     }
+
     function onOp(o) {
       if (op && prev!==null) prev = String(eval(prev + op + curr));
       else prev = curr;
       op = o; curr = '0'; updateUSD();
     }
+
     function onBack() {
       curr = curr.length>1 ? curr.slice(0,-1) : '0';
       updateUSD();
     }
+
     function onClear() {
       prev = null; op = null; curr = '0';
       updateUSD(); krwDisp.innerText = '0';
+      timeStamp.innerText = '';
     }
 
     async function onConvert() {
-      // 내부 사칙연산
+      // 내부 계산 먼저
       if (op && prev!==null) {
         curr = String(eval(prev + op + curr));
         prev = null; op = null;
         updateUSD();
       }
-      // 외부 환율 API 호출 (Frakfurter)
+      // 환율 호출
       try {
         const res  = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW');
         if (!res.ok) throw new Error(res.status);
@@ -156,6 +165,15 @@
         const krw  = (parseFloat(curr)*rate)
                         .toLocaleString('ko-KR',{maximumFractionDigits:0});
         krwDisp.innerText = krw;
+        // 타임스탬프 표시 (ex. 2025. 4. 19. 16:23:10)
+        const now = new Date();
+        const fmt = now.getFullYear() +'. '
+                  + (now.getMonth()+1) +'. '
+                  + now.getDate() +'. '
+                  + now.getHours() +':'
+                  + now.getMinutes().toString().padStart(2,'0') +':'
+                  + now.getSeconds().toString().padStart(2,'0');
+        timeStamp.innerText = '기준: ' + fmt;
       } catch (e) {
         console.error(e);
         alert(
