@@ -1,64 +1,192 @@
-<script>
-(function(){
-  const WORKER_PROXY_URL = 'https://broad-breeze-4af6.jane785714.workers.dev?url=';
-  const API_URL = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>환율계산멍🐶</title>
+  <style>
+    /* --- 베이스 레이아웃 --- */
+    body {
+      margin:0;
+      background:#f0f2f5;
+      font-family:Arial,sans-serif;
+      display:flex;justify-content:center;align-items:center;
+      min-height:100vh;padding:20px;
+    }
+    .container {
+      width:100%;max-width:360px;
+      background:#fff;border-radius:16px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.1);
+      padding:20px;
+    }
+    h1 {
+      text-align:center;margin:0 0 16px;
+      font-size:24px;
+    }
+    .rate-panel {
+      display:flex;justify-content:space-between;align-items:center;
+      background:#fafafa;border-radius:12px;
+      padding:12px 16px;margin-bottom:12px;
+      box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .rate-panel .flag { font-size:28px; margin-right:8px; }
+    .rate-panel .code { font-size:16px; color:#555; margin-right:auto; }
+    .rate-panel .amount { font-size:20px; font-weight:bold; color:#222; }
+    .stamp {
+      text-align:center;font-size:12px;color:#888;margin-bottom:12px;
+    }
+    .keypad {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-gap:8px;
+    }
+    .keypad button {
+      padding:16px;font-size:18px;
+      border:none;border-radius:8px;
+      background:#e0e0e0;cursor:pointer;
+    }
+    .keypad button[data-action="clear"] { background:#e74c3c;color:#fff; }
+    .keypad button[data-action="back"]  { background:#ddd; }
+    .keypad button[data-action="divide"],
+    .keypad button[data-action="multiply"],
+    .keypad button[data-action="minus"],
+    .keypad button[data-action="plus"] {
+      background:#f1c40f;color:#fff;
+    }
+    .keypad button[data-action="equal"] {
+      background:#4caf50;color:#fff;
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>환율계산멍🐶</h1>
 
-  let inputStr = '';
+    <!-- USD 입력 -->
+    <div class="rate-panel">
+      <span class="flag">🇺🇸</span>
+      <span class="code">USD</span>
+      <span id="usdValue" class="amount">0</span>
+    </div>
+    <!-- KRW 결과 -->
+    <div class="rate-panel">
+      <span class="flag">🇰🇷</span>
+      <span class="code">KRW</span>
+      <span id="krwValue" class="amount">0</span>
+    </div>
+    <!-- 타임스탬프 -->
+    <div id="rateTime" class="stamp">조회 시간: –</div>
 
-  function updateDisplay(){
-    document.getElementById('usdValue').innerText = inputStr || '0';
-  }
+    <!-- 키패드 -->
+    <div class="keypad">
+      <button data-action="clear">C</button>
+      <button data-action="back">←</button>
+      <button data-action="divide">÷</button>
+      <button data-action="multiply">×</button>
 
-  async function fetchAndConvert(){
-    try {
-      // ① Worker 프록시 + 캐시 버스터
-      const proxyUrl = WORKER_PROXY_URL + encodeURIComponent(API_URL + '&_=' + Date.now());
-      console.log('▶️ 프록시 호출 URL:', proxyUrl);
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button data-action="minus">−</button>
 
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button data-action="plus">＋</button>
 
-      // 디버깅 로그: 진짜 응답이 뭐 오는지 확인
-      const raw = await res.clone().text();
-      console.log('▶️ API 응답(raw):', raw);
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button data-key="0" style="grid-column: span 2;">0</button>
 
-      const json = JSON.parse(raw);
-      if (!json.rates || typeof json.rates.KRW !== 'number') {
-        throw new Error('API 형식이 올바르지 않습니다');
+      <button data-action="equal">=</button>
+      <button data-action="decimal">.</button>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // 1) 본인 Workers 프록시 URL
+    const WORKER_PROXY = 'https://YOUR_WORKER_SUBDOMAIN.workers.dev?url=';
+    // 2) 키 불필요 무료 API
+    const API_URL = 'https://open.er-api.com/v6/latest/USD';
+
+    let inputStr = '';
+
+    function updateDisplay() {
+      document.getElementById('usdValue').innerText = inputStr || '0';
+    }
+
+    async function fetchAndConvert() {
+      try {
+        // Worker 프록시 + 캐시 버스터
+        const proxyUrl = WORKER_PROXY
+          + encodeURIComponent(API_URL + '?_=' + Date.now());
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (!json.rates || typeof json.rates.KRW !== 'number') {
+          throw new Error('API 형식이 올바르지 않습니다');
+        }
+
+        const rate   = json.rates.KRW;
+        const result = eval(inputStr) * rate;
+        document.getElementById('krwValue').innerText =
+          Math.round(result).toLocaleString();
+        document.getElementById('rateTime').innerText =
+          '조회 시간: ' + new Date().toLocaleString();
+      } catch (e) {
+        alert(
+          '환율 정보를 가져오는 데 실패했어요.\n'
+          + '오류: ' + e.message + '\n'
+          + '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
+        );
       }
-
-      const rate = json.rates.KRW;
-      const result = eval(inputStr) * rate;
-      document.getElementById('krwValue').innerText = Math.round(result).toLocaleString();
-      document.getElementById('rateTime').innerText = '기준: ' + new Date().toLocaleString();
-
-    } catch (e) {
-      alert(
-        '환율 정보를 가져오는 데 실패했어요.\n' +
-        '오류: ' + e.message + '\n' +
-        '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
-      );
     }
-  }
 
-  document.querySelector('.keypad').addEventListener('click', e => {
-    if (e.target.tagName !== 'BUTTON') return;
-    const action = e.target.dataset.action;
-    const key    = e.target.dataset.key;
+    document.querySelector('.keypad')
+      .addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON') return;
+        const action = e.target.dataset.action;
+        const key    = e.target.dataset.key;
 
-    if (action === 'clear')      { inputStr = ''; updateDisplay(); return; }
-    if (action === 'back')       { inputStr = inputStr.slice(0,-1); updateDisplay(); return; }
-    if (action === 'decimal')    { inputStr += '.'; updateDisplay(); return; }
-    if (/^(divide|multiply|minus|plus)$/.test(action)) {
-      inputStr += ' ' + e.target.textContent + ' ';
-      updateDisplay(); return;
-    }
-    if (key) {
-      inputStr += key; updateDisplay(); return;
-    }
-    if (action === 'equal') {
-      fetchAndConvert();
-    }
-  });
-})();
-</script>
+        if (action === 'clear') {
+          inputStr = '';
+          updateDisplay();
+          return;
+        }
+        if (action === 'back') {
+          inputStr = inputStr.slice(0, -1);
+          updateDisplay();
+          return;
+        }
+        if (action === 'decimal') {
+          if (!inputStr.includes('.')) inputStr += '.';
+          updateDisplay();
+          return;
+        }
+        if (/^(divide|multiply|minus|plus)$/.test(action)) {
+          const map = {
+            divide:   '/',
+            multiply: '*',
+            minus:    '-',
+            plus:     '+'
+          };
+          inputStr += map[action];
+          updateDisplay();
+          return;
+        }
+        if (key) {
+          inputStr += key;
+          updateDisplay();
+          return;
+        }
+        if (action === 'equal') {
+          fetchAndConvert();
+        }
+      });
+  })();
+  </script>
+</body>
+</html>
