@@ -4,113 +4,95 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산멍🐶</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
+  <link rel="icon"
+    href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
-    /* --- 베이스 레이아웃 --- */
     body {
-      margin: 0;
-      background: #f0f2f5;
+      margin: 0; background: #f0f2f5;
       font-family: Arial, sans-serif;
-      display: flex; justify-content: center; align-items: center;
-      min-height: 100vh; padding: 20px;
+      display: flex; justify-content:center; align-items:center;
+      min-height:100vh; padding:20px;
     }
     .container {
-      width: 100%; max-width: 360px;
-      background: white; border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      padding: 20px;
+      width:100%; max-width:360px;
+      background:#fff; border-radius:16px;
+      box-shadow:0 4px 16px rgba(0,0,0,0.1);
+      padding:20px;
     }
     h1 {
-      text-align: center; margin: 0 0 16px;
-      font-size: 24px;
+      text-align:center; margin:0 0 16px;
+      font-size:24px;
     }
-
-    /* --- 환율 패널 --- */
     .rate-panel {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fafafa; border-radius: 12px;
-      padding: 12px 16px; margin-bottom: 12px;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      display:flex; justify-content:space-between; align-items:center;
+      background:#fafafa; border-radius:12px;
+      padding:12px 16px; margin-bottom:12px;
+      box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
     }
-    .rate-panel .flag { font-size: 28px; margin-right: 8px; }
-    .rate-panel .code { font-size: 16px; color: #555; margin-right: auto; }
-    .rate-panel .amount { font-size: 20px; font-weight: bold; color: #222; }
-
-    /* --- 조회 시각 --- */
+    .rate-panel .flag { font-size:28px; margin-right:8px; }
+    .rate-panel .code { font-size:16px; color:#555; margin-right:auto; }
+    .rate-panel .amount { font-size:20px; font-weight:bold; color:#222; }
     .stamp {
-      text-align: center; font-size: 12px; color: #888;
-      margin-bottom: 12px;
+      text-align:center; font-size:12px; color:#888;
+      margin-bottom:12px;
     }
-
-    /* --- 버튼식 키패드 --- */
     .keypad {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-gap: 8px;
+      display:grid; grid-template-columns:repeat(4,1fr); grid-gap:8px;
     }
     .keypad button {
-      padding: 12px; font-size: 18px;
-      border: none; border-radius: 8px;
-      background: #e0e0e0; cursor: pointer;
+      padding:12px; font-size:18px;
+      border:none; border-radius:8px;
+      background:#e0e0e0; cursor:pointer;
     }
-    .keypad button[data-action="clear"] { background: #f74c3c; color: #fff }
-    .keypad button[data-action="back"]  { background: #ddd }
+    .keypad button[data-action="clear"] { background:#f74c3c; color:#fff }
+    .keypad button[data-action="back"]  { background:#ddd }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
     .keypad button[data-action="plus"] {
-      background: #f1c40f; color: #fff;
+      background:#f1c40f; color:#fff;
     }
     .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
-      grid-column: span 2;
+      background:#4caf50; color:#fff;
+      grid-column:span 2;
     }
-
   </style>
 </head>
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
 
-    <!-- USD 입력 -->
     <div class="rate-panel">
       <span class="flag">🇺🇸</span>
       <span class="code">USD</span>
       <span id="usdValue" class="amount">0</span>
     </div>
 
-    <!-- KRW 결과 -->
     <div class="rate-panel">
       <span class="flag">🇰🇷</span>
       <span class="code">KRW</span>
       <span id="krwValue" class="amount">0</span>
     </div>
 
-    <!-- 조회 시각 -->
     <div id="rateTime" class="stamp">조회 시간: --</div>
 
-    <!-- 버튼식 키패드 -->
     <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button data-action="divide">÷</button>
       <button data-action="multiply">×</button>
-
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="minus">−</button>
-
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="plus">+</button>
-
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-key="0" style="grid-column: span 2;">0</button>
-
       <button data-action="equal">=</button>
       <button data-action="decimal">.</button>
     </div>
@@ -118,77 +100,58 @@
 
   <script>
   (function(){
-    const API_URL = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
+    // ① 여기에 본인 Worker 배포 URL 넣으세요 (끝에 ?url= 포함)
+    const WORKER_PROXY_URL = 'https://broad-breeze-4af6.jane785714.workers.dev?url=';
 
     let inputStr = '';
-
-    function updateDisplay() {
+    function updateDisplay(){
       document.getElementById('usdValue').innerText = inputStr || '0';
     }
 
-    async function fetchAndConvert() {
+    async function fetchAndConvert(){
       try {
-        // 캐시 버스터
-        const url = API_URL + '&_=' + Date.now();
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        // ② 원본 API + 캐시버스터를 Worker URL 파라미터로 인코딩
+        const api = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
+        const proxyUrl = WORKER_PROXY_URL
+          + encodeURIComponent(api + '&_=' + Date.now());
+
+        const res = await fetch(proxyUrl);
+        if(!res.ok) throw new Error('HTTP '+res.status);
 
         const data = await res.json();
-        if (!data.rates || typeof data.rates.KRW !== 'number') {
+        if(!data.rates || typeof data.rates.KRW!=='number'){
           throw new Error('응답 형식 이상');
         }
-
         const rate = data.rates.KRW;
-        const result = eval(inputStr || '0') * rate;
+        const result = eval(inputStr||'0') * rate;
         document.getElementById('krwValue').innerText =
           Math.round(result).toLocaleString();
 
-        const now = new Date();
         document.getElementById('rateTime').innerText =
-          '기준: ' + now.toLocaleString();
-      } catch (e) {
+          '기준: '+new Date().toLocaleString();
+
+      } catch(e) {
         alert(
-          '환율 정보를 가져오는 데 실패했어요.\n' +
-          '오류: ' + e.message + '\n' +
+          '환율 정보를 가져오는 데 실패했어요.\n'+
+          '오류: '+e.message+'\n'+
           '잠시 후 다시 시도해주세요.'
         );
       }
     }
 
-    document.querySelector('.keypad').addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      const act = e.target.dataset.action;
-      const key = e.target.dataset.key;
+    document.querySelector('.keypad').addEventListener('click', e=>{
+      if(e.target.tagName!=='BUTTON') return;
+      const act = e.target.dataset.action, key = e.target.dataset.key;
 
-      if (act === 'clear') {
-        inputStr = '';
-        updateDisplay();
-        return;
+      if(act==='clear'){ inputStr=''; updateDisplay(); return }
+      if(act==='back'){ inputStr=inputStr.slice(0,-1); updateDisplay(); return }
+      if(/^(divide|multiply|minus|plus)$/.test(act)){
+        const m={divide:'/',multiply:'*',minus:'-',plus:'+'};
+        inputStr+=m[act]; updateDisplay(); return;
       }
-      if (act === 'back') {
-        inputStr = inputStr.slice(0, -1);
-        updateDisplay();
-        return;
-      }
-      if (/^(divide|multiply|minus|plus)$/.test(act)) {
-        const map = { divide: '/', multiply: '*', minus: '-', plus: '+' };
-        inputStr += map[act];
-        updateDisplay();
-        return;
-      }
-      if (act === 'decimal') {
-        inputStr += '.';
-        updateDisplay();
-        return;
-      }
-      if (act === 'equal') {
-        fetchAndConvert();
-        return;
-      }
-      if (key) {
-        inputStr += key;
-        updateDisplay();
-      }
+      if(act==='decimal'){ inputStr+='.'; updateDisplay(); return }
+      if(act==='equal'){ fetchAndConvert(); return }
+      if(key){ inputStr+=key; updateDisplay() }
     });
   })();
   </script>
