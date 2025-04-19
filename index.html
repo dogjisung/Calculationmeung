@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>환율계산멍🐶</title>
   <link rel="icon"
-    href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png" />
+    href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png"/>
   <style>
     /* --- 베이스 레이아웃 --- */
     body {
@@ -44,22 +44,16 @@
     /* --- 키패드 --- */
     .keypad {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4,1fr);
       grid-gap: 8px;
     }
     .keypad button {
-      padding: 12px;
-      font-size: 18px;
+      padding: 12px; font-size: 18px;
       border: none; border-radius: 8px;
-      background: #e0e0e0;
-      cursor: pointer;
+      background: #e0e0e0; cursor: pointer;
     }
-    .keypad button[data-action="clear"] {
-      background: #e74c3c; color: white;
-    }
-    .keypad button[data-action="back"] {
-      background: #ddd;
-    }
+    .keypad button[data-action="clear"] { background: #e74c3c; color: white; }
+    .keypad button[data-action="back"]  { background: #ddd; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
@@ -72,19 +66,18 @@
     }
   </style>
 </head>
-
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
 
-    <!-- USD -->
+    <!-- USD 패널 -->
     <div class="rate-panel">
       <span class="flag">🇺🇸</span>
       <span class="code">USD</span>
       <span id="usdValue" class="amount">0</span>
     </div>
 
-    <!-- KRW -->
+    <!-- KRW 패널 -->
     <div class="rate-panel">
       <span class="flag">🇰🇷</span>
       <span class="code">KRW</span>
@@ -94,7 +87,7 @@
     <!-- 타임스탬프 -->
     <div id="rateTime" class="stamp">기준: –</div>
 
-    <!-- 키패드 -->
+    <!-- 버튼식 키패드 -->
     <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -114,7 +107,7 @@
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
-      <button data-key="0" style="grid-column: span 2;">0</button>
+      <button data-key="0" style="grid-column:span 2">0</button>
 
       <button data-action="equal">=</button>
       <button data-action="decimal">.</button>
@@ -123,8 +116,7 @@
 
   <script>
     (function(){
-      const BASE_PATH = '/Calculationmeung';   // ← 서브폴더 배포면 '/Calculationmeung', 루트면 ''
-      const API_URL   = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
+      const API_BASE = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
 
       let inputStr = '';
 
@@ -134,10 +126,17 @@
 
       async function fetchAndConvert(){
         try {
-          const res   = await fetch(API_URL);
-          const json  = await res.json();
-          const rate  = json.rates.KRW;
-          const result= eval(inputStr) * rate;
+          // 캐시 방지를 위해 timestamp 파라미터 붙임
+          const url = new URL(API_BASE);
+          url.searchParams.set('_', Date.now());
+
+          const res = await fetch(url.href, { mode: 'cors' });
+          if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+
+          const json = await res.json();
+          const rate = json.rates.KRW;
+          const result = eval(inputStr) * rate;
+
           document.getElementById('krwValue').innerText =
             Math.round(result).toLocaleString();
 
@@ -146,8 +145,9 @@
             '기준: ' + now.toLocaleString();
         } catch (e) {
           alert(
-            '환율 정보를 가져오는 데 실패했어요.\n' +
-            '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
+            '환율 정보를 가져오는 데 실패했어요.\n'
+            + '오류: ' + e.message + '\n'
+            + '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
           );
         }
       }
@@ -160,11 +160,10 @@
         if (a==='clear')  { inputStr=''; updateDisplay(); return; }
         if (a==='back')   { inputStr=inputStr.slice(0,-1); updateDisplay(); return; }
         if (/^(divide|multiply|minus|plus)$/.test(a)) {
-          inputStr += ' ' + e.target.textContent + ' ';
-          updateDisplay(); return;
+          inputStr += ' ' + e.target.textContent + ' '; updateDisplay(); return;
         }
-        if (a==='decimal'){ inputStr+='.'; updateDisplay(); return; }
-        if (k)           { inputStr+=k; updateDisplay(); return; }
+        if (a==='decimal'){ inputStr += '.'; updateDisplay(); return; }
+        if (k)           { inputStr += k; updateDisplay(); return; }
         if (a==='equal') { fetchAndConvert(); }
       });
     })();
