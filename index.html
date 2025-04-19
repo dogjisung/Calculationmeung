@@ -20,8 +20,22 @@
       padding: 20px;
     }
     h1 {
-      text-align: center; margin: 0 0 16px;
+      text-align: center; margin: 0 0 8px;
       font-size: 24px;
+    }
+    /* swap 버튼 */
+    .swap-btn {
+      display: block;
+      margin: 0 auto 12px;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    /* 패널 래퍼 (flex로 순서 바꿀 수 있게) */
+    #panels {
+      display: flex;
+      flex-direction: column;
     }
     .rate-panel {
       display: flex; justify-content: space-between; align-items: center;
@@ -57,23 +71,37 @@
     .keypad button[data-action="plus"] {
       background: #f1c40f; color: white;
     }
-    .keypad button[data-action="equal"] {
-      background: #4caf50; color: white; grid-column: span 2;
+    /* 0은 좌측 두 칸 차지 */
+    .keypad button[data-key="0"] {
+      grid-column: span 2;
     }
-    .keypad button[data-key="0"] { grid-column: span 2; }
+    /* . 은 3번째 칸 */
+    .keypad button[data-action="decimal"] {
+      grid-column: 3;
+    }
+    /* = 는 4번째 칸 */
+    .keypad button[data-action="equal"] {
+      grid-column: 4;
+      background: #4caf50; color: white;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
-    <div class="rate-panel">
-      <span class="flag">🇺🇸</span><span class="code">USD</span>
-      <span id="usdValue" class="amount">0</span>
+    <button id="swapBtn" class="swap-btn" title="패널 순서 전환">🔄</button>
+
+    <div id="panels">
+      <div class="rate-panel">
+        <span class="flag">🇺🇸</span><span class="code">USD</span>
+        <span id="usdValue" class="amount">0</span>
+      </div>
+      <div class="rate-panel">
+        <span class="flag">🇰🇷</span><span class="code">KRW</span>
+        <span id="krwValue" class="amount">0</span>
+      </div>
     </div>
-    <div class="rate-panel">
-      <span class="flag">🇰🇷</span><span class="code">KRW</span>
-      <span id="krwValue" class="amount">0</span>
-    </div>
+
     <div id="rateTime" class="stamp">조회 시간: --</div>
 
     <div class="keypad">
@@ -104,57 +132,72 @@
 
   <script>
   (function(){
-    // Frankfurter public API (키 불필요, CORS 허용)
-    const API_URL = 'https://api.frankfurter.app/latest?from=USD&to=KRW';
-
+    const API_BASE = 'https://api.frankfurter.app/latest';
     let input = '';
-    function updateDisplay(){
-      document.getElementById('usdValue').innerText = input || '0';
+
+    // 액정 갱신 (USD 쪽만)
+    function updateDisplay() {
+      document.getElementById('usdValue')
+        .innerText = input || '0';
     }
 
-    async function fetchAndConvert(){
+    // 환율 조회 & 계산
+    async function fetchAndConvert() {
       try {
-        const res = await fetch(API_URL + '&_=' + Date.now());
+        const url = `${API_BASE}?from=USD&to=KRW&_=${Date.now()}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error(res.status);
         const json = await res.json();
         const rate = json.rates.KRW;
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
         const result = eval(input) * rate;
-        document.getElementById('krwValue').innerText =
-          Math.round(result).toLocaleString();
-        document.getElementById('rateTime').innerText =
-          '조회 시간: ' + new Date().toLocaleString();
+        document.getElementById('krwValue')
+          .innerText = Math.round(result).toLocaleString();
+        document.getElementById('rateTime')
+          .innerText = '조회 시간: ' + new Date().toLocaleString();
       } catch (e) {
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
       }
     }
 
-    document.querySelector('.keypad').addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      const action = e.target.dataset.action;
-      const key    = e.target.dataset.key;
+    // 패널 순서 토글
+    document.getElementById('swapBtn')
+      .addEventListener('click', () => {
+        const p = document.getElementById('panels');
+        p.style.flexDirection =
+          p.style.flexDirection === 'column-reverse'
+          ? 'column'
+          : 'column-reverse';
+      });
 
-      if (action === 'clear') {
-        input = ''; updateDisplay(); return;
-      }
-      if (action === 'back') {
-        input = input.slice(0,-1); updateDisplay(); return;
-      }
-      if (/^(divide|multiply|minus|plus)$/.test(action)) {
-        input += e.target.textContent; updateDisplay(); return;
-      }
-      if (action === 'decimal') {
-        if (!input.includes('.')) input += '.';
-        updateDisplay(); return;
-      }
-      if (key) {
-        input += key; updateDisplay(); return;
-      }
-      if (action === 'equal') {
-        if (!input) return;
-        fetchAndConvert();
-      }
-    });
+    // 키패드 클릭 핸들러
+    document.querySelector('.keypad')
+      .addEventListener('click', e => {
+        if (e.target.tagName !== 'BUTTON') return;
+        const action = e.target.dataset.action;
+        const key    = e.target.dataset.key;
+
+        if (action === 'clear') {
+          input = ''; updateDisplay(); return;
+        }
+        if (action === 'back') {
+          input = input.slice(0, -1); updateDisplay(); return;
+        }
+        if (/^(divide|multiply|minus|plus)$/.test(action)) {
+          input += e.target.textContent; updateDisplay(); return;
+        }
+        if (action === 'decimal') {
+          if (!input.includes('.')) input += '.';
+          updateDisplay(); return;
+        }
+        if (key) {
+          input += key; updateDisplay(); return;
+        }
+        if (action === 'equal') {
+          if (!input) return;
+          fetchAndConvert();
+        }
+      });
   })();
   </script>
 </body>
