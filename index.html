@@ -2,145 +2,187 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>환율계산멍🐶</title>
   <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Emoji_u1f436.svg/240px-Emoji_u1f436.svg.png">
   <style>
-    /*--- 공통 레이아웃 ---*/
+    /* --- 전체 레이아웃 --- */
     body {
       margin: 0;
+      padding: 20px;
       background: #f0f2f5;
       font-family: 'Arial', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: flex; justify-content: center; align-items: center;
       min-height: 100vh;
-      padding: 20px;
     }
     .container {
-      width: 100%;
-      max-width: 360px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      padding: 20px;
+      width: 360px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
     h1 {
-      margin: 0 0 16px;
-      font-size: 20px;
+      margin: 16px 0 0;
       text-align: center;
+      font-size: 24px;
     }
-
-    /*--- 카드형 패널 ---*/
-    .panel {
+    /* --- 디스플레이 패널 --- */
+    .display {
+      padding: 12px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .disp-usd, .disp-krw {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #fafafa;
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 12px;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      font-size: 20px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
     }
-    .panel .left {
-      display: flex;
-      align-items: center;
-    }
-    .flag {
+    .disp-usd .flag, .disp-krw .flag {
       font-size: 28px;
       margin-right: 8px;
     }
-    .code {
-      font-size: 16px;
-      color: #555;
-      width: 40px;
+    .label {
+      font-size: 14px;
+      color: #888;
+      text-align: center;
+      margin-top: -8px;
     }
-    .amount-input {
+    /* --- 키패드 --- */
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 8px;
+      padding: 16px;
+    }
+    .keys button {
       font-size: 18px;
-      border: none;
-      text-align: right;
-      width: 100px;
-      background: transparent;
-      outline: none;
-    }
-    .amount-output {
-      font-size: 18px;
-      font-weight: bold;
-      color: #222;
-    }
-
-    /*--- 버튼 ---*/
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      background-color: #4CAF50;
+      padding: 16px;
       border: none;
       border-radius: 8px;
-      color: white;
-      font-size: 16px;
+      background: #eee;
       cursor: pointer;
+      transition: background 0.2s;
     }
-    button:active {
-      background-color: #429b45;
-    }
-
-    /*--- 타임스탬프 ---*/
-    .timestamp {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 12px;
-      color: #888;
-    }
+    .keys button.operator { background: #ffd966; }
+    .keys button.equal    { background: #4caf50; color: #fff; grid-column: span 2; }
+    .keys button.clear    { background: #f44336; color: #fff; }
+    .keys button:active    { background: #ddd; }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
-
-    <!-- USD 입력 패널 -->
-    <div class="panel">
-      <div class="left">
-        <span class="flag">🇺🇸</span>
-        <span class="code">USD</span>
+    <div class="display">
+      <div class="disp-usd">
+        <div><span class="flag">🇺🇸</span> USD</div>
+        <div id="usdDisplay">0</div>
       </div>
-      <input id="usdInput" class="amount-input" type="number" placeholder="0" />
+      <div class="label">USD 입력</div>
+      <div class="disp-krw">
+        <div><span class="flag">🇰🇷</span> KRW</div>
+        <div id="krwDisplay">0</div>
+      </div>
+      <div class="label">환산 결과</div>
     </div>
 
-    <!-- KRW 결과 패널 -->
-    <div class="panel">
-      <div class="left">
-        <span class="flag">🇰🇷</span>
-        <span class="code">KRW</span>
-      </div>
-      <div id="krwResult" class="amount-output">0</div>
-    </div>
+    <div class="keys">
+      <button class="clear" onclick="onClear()">C</button>
+      <button onclick="onBack()">←</button>
+      <button class="operator" onclick="onOp('/')">÷</button>
+      <button class="operator" onclick="onOp('*')">×</button>
 
-    <button onclick="convert()">계산하기</button>
-    <div id="rateTime" class="timestamp"></div>
+      <button onclick="onNum('7')">7</button>
+      <button onclick="onNum('8')">8</button>
+      <button onclick="onNum('9')">9</button>
+      <button class="operator" onclick="onOp('-')">−</button>
+
+      <button onclick="onNum('4')">4</button>
+      <button onclick="onNum('5')">5</button>
+      <button onclick="onNum('6')">6</button>
+      <button class="operator" onclick="onOp('+')">+</button>
+
+      <button onclick="onNum('1')">1</button>
+      <button onclick="onNum('2')">2</button>
+      <button onclick="onNum('3')">3</button>
+      <button onclick="onConvert()" class="equal">=</button>
+
+      <button onclick="onNum('0')" style="grid-column: span 2;">0</button>
+      <button onclick="onNum('.')">.</button>
+    </div>
   </div>
 
   <script>
-    async function convert() {
-      const usd = parseFloat(document.getElementById("usdInput").value);
-      if (isNaN(usd)) {
-        alert("숫자를 입력해주세요!");
-        return;
-      }
-      try {
-        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
-        const data = await res.json();
-        const rate = data.rates.KRW;
-        const now = new Date();
+    let prev = null,          // 이전 값
+        op = null,            // 선택된 연산자
+        curr = '0';           // 현재 입력 문자열
 
-        const krw = Math.round(usd * rate).toLocaleString();
-        document.getElementById("krwResult").innerText = krw;
-        document.getElementById("rateTime").innerText =
-          `1 USD = ${rate.toFixed(3)} KRW (기준: ${now.toLocaleString()})`;
+    const usdDisp = document.getElementById('usdDisplay');
+    const krwDisp = document.getElementById('krwDisplay');
+
+    function updateUSD() {
+      usdDisp.innerText = curr;
+    }
+
+    function onNum(d) {
+      if (curr === '0' && d !== '.') curr = d;
+      else if (d === '.' && curr.includes('.')) return;
+      else curr += d;
+      updateUSD();
+    }
+
+    function onOp(o) {
+      if (op && prev !== null) {
+        // 이전 연산부터 계산
+        prev = String(eval(prev + op + curr));
+      } else {
+        prev = curr;
+      }
+      op = o;
+      curr = '0';
+      updateUSD();
+    }
+
+    function onBack() {
+      curr = curr.length > 1 ? curr.slice(0, -1) : '0';
+      updateUSD();
+    }
+
+    function onClear() {
+      prev = null; op = null; curr = '0';
+      updateUSD();
+      krwDisp.innerText = '0';
+    }
+
+    async function onConvert() {
+      // 먼저 만약 연산자가 남아있으면 계산
+      if (op && prev !== null) {
+        curr = String(eval(prev + op + curr));
+        prev = null; op = null;
+        updateUSD();
+      }
+      // 환율 API 호출
+      try {
+        const res  = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=KRW');
+        const json = await res.json();
+        const rate = json.rates.KRW;
+        const krw  = (parseFloat(curr) * rate).toLocaleString('ko-KR', { maximumFractionDigits: 0 });
+        krwDisp.innerText = krw;
       } catch (e) {
-        alert("환율 정보를 가져오는 데 실패했어요. 인터넷 연결을 확인해주세요.");
+        alert('환율 정보를 가져오는 데 실패했어요.\n인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.');
       }
     }
+
+    // 초기 화면
+    updateUSD();
   </script>
 </body>
 </html>
