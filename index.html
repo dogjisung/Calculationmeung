@@ -64,7 +64,8 @@
     .keys button.equal    {
       background: #4caf50;
       color: #fff;
-      grid-column: 1 / span 2;
+      /* “=”과 “0” 위치 바꾸기 위해 span 1칸씩 움직였습니다 */
+      grid-column: 2 / span 2;
     }
     .keys button:active { background: #ddd; }
   </style>
@@ -107,6 +108,7 @@
       <button onclick="onNum('3')">3</button>
       <button onclick="onNum('0')">0</button>
 
+      <!-- “=” 과 “0” 자리 교환 -->
       <button class="equal" onclick="onConvert()">=</button>
       <button onclick="onNum('.')">.</button>
     </div>
@@ -137,18 +139,17 @@
       prev = null; op = null; curr = '0';
       updateUSD(); krwDisp.innerText = '0';
     }
+
     async function onConvert() {
-      // 내부 계산
+      // 내부 사칙연산
       if (op && prev!==null) {
         curr = String(eval(prev + op + curr));
         prev = null; op = null;
         updateUSD();
       }
-      // 직접 exchangerate.host 호출
+      // 외부 환율 API 호출 (Frakfurter)
       try {
-        const res  = await fetch(
-          'https://api.exchangerate.host/latest?base=USD&symbols=KRW'
-        );
+        const res  = await fetch('https://api.frankfurter.app/latest?from=USD&to=KRW');
         if (!res.ok) throw new Error(res.status);
         const json = await res.json();
         const rate = json.rates.KRW;
