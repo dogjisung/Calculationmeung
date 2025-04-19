@@ -101,8 +101,8 @@
 
   <script>
   (function(){
-    // ★ 이걸 OPEN-ER 무료 API로 고정
-    const API_URL = 'https://open.er-api.com/v6/latest/USD';
+    // exchangerate.host 무료 엔드포인트
+    const API_URL = 'https://api.exchangerate.host/latest?base=USD&symbols=KRW';
 
     let inputStr = '';
 
@@ -112,8 +112,8 @@
 
     async function fetchAndConvert() {
       try {
-        // 캐시 방지용 타임스탬프만 추가
-        const res = await fetch(API_URL + '?_=' + Date.now());
+        // 캐시 방지용 파라미터
+        const res = await fetch(API_URL + '&_=' + Date.now());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!json.rates || typeof json.rates.KRW !== 'number') {
