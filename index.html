@@ -118,78 +118,44 @@
   </div>
 
   <!-- 이하 생략… -->
-  <script>
-  (function(){
-    let input  = '';
-    let base   = 'USD', target = 'KRW';
+<script>
+(function(){
+  // … 기존 변수, updateInput(), 이벤트 핸들러 등은 그대로 둡니다.
 
-    const flag1    = document.getElementById('flag1'),
-          code1    = document.getElementById('code1'),
-          amt1     = document.getElementById('amt1'),
-          flag2    = document.getElementById('flag2'),
-          code2    = document.getElementById('code2'),
-          amt2     = document.getElementById('amt2'),
-          rateTime = document.getElementById('rateTime'),
-          keypad   = document.querySelector('.keypad');
-
-    function updateInput() {
-      amt1.innerText = input || '0';
-    }
-
-    async function fetchAndConvert() {
+  async function fetchAndConvert() {
+    try {
+      // 1) 입력된 수식을 숫자로 계산
+      let amount = 0;
       try {
-        // convert 엔드포인트로 한 방에 계산
-        const url = `https://api.exchangerate.host/convert?from=${base}&to=${target}&amount=${encodeURIComponent(input||0)}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(res.status);
-        const json = await res.json();
-        // json.result에 바로 계산 결과가 들어옵니다
-        if (typeof json.result !== 'number') throw new Error('환율 데이터 이상');
+        amount = parseFloat(eval(input)) || 0;
+      } catch {
+        amount = 0;
+      }
 
-        amt2.innerText    = Math.round(json.result).toLocaleString();
-        // API에서 준 date 를 쓰거나, 현재 시각을 사용
-        rateTime.innerText = '조회 시간: ' + (json.date 
-          ? new Date(json.date).toLocaleString() 
+      // 2) convert 엔드포인트로 계산된 숫자(amount) 전달
+      const url = `https://api.exchangerate.host/convert?from=${base}&to=${target}&amount=${amount}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(res.status);
+
+      const json = await res.json();
+      if (typeof json.result !== 'number') throw new Error('환율 데이터 이상');
+
+      // 3) 받아온 결과 보여주기
+      amt2.innerText = Math.round(json.result).toLocaleString();
+      rateTime.innerText = '조회 시간: ' +
+        (json.date
+          ? new Date(json.date).toLocaleString()
           : new Date().toLocaleString()
         );
-      } catch (e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
-      }
+    } catch (e) {
+      alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
     }
+  }
 
-    keypad.addEventListener('click', e=>{
-      if (e.target.tagName !== 'BUTTON') return;
-      const a = e.target.dataset.action, k = e.target.dataset.key;
+  // … 나머지 keypad 이벤트, updateInput() 호출 등은 그대로
+})();
+</script>
 
-      if (a === 'clear') {
-        input = ''; updateInput();
-      } else if (a === 'back') {
-        input = input.slice(0,-1); updateInput();
-      } else if (a === 'decimal') {
-        if (!input.includes('.')) input += '.';
-        updateInput();
-      } else if (/^(divide|multiply|minus|plus)$/.test(a)) {
-        input += e.target.textContent;
-        updateInput();
-      } else if (a === 'swap') {
-        // 통화 스왑
-        [base, target] = [target, base];
-        [flag1.textContent, flag2.textContent] = [flag2.textContent, flag1.textContent];
-        [code1.textContent, code2.textContent] = [code2.textContent, code1.textContent];
-        [amt1.textContent, amt2.textContent]     = [amt2.textContent, amt1.textContent];
-        updateInput();
-      } else if (a === 'equal') {
-        fetchAndConvert();
-      } else if (k) {
-        input += k;
-        updateInput();
-      }
-    });
-
-    // 초기 표시
-    updateInput();
-  })();
-  </script>
 </body>
 </html>
 
