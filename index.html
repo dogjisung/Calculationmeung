@@ -5,32 +5,120 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>환율계산멍🐶</title>
   <style>
-    /* (이전과 동일한 CSS) */
+    /* ========== 베이스 레이아웃 ========== */
+    body {
+      margin: 0;
+      background: #f0f2f5;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 360px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin: 0 0 16px;
+      font-size: 24px;
+    }
+
+    /* ========== 환율 패널 ========== */
+    .rate-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .rate-panel .flag { font-size: 28px; margin-right: 8px; }
+    .rate-panel .code { font-size: 16px; color: #555; margin-right: auto; }
+    .rate-panel .amount { font-size: 20px; font-weight: bold; color: #222; }
+
+    /* ========== 조회 시간 스탬프 ========== */
+    .stamp {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    /* ========== 키패드 그리드 ========== */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 8px;
+    }
+    .keypad button {
+      padding: 12px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background: #e0e0e0;
+      cursor: pointer;
+    }
+    .keypad button[data-action="clear"] { background: #f74c3c; color: white; }
+    .keypad button[data-action="back"],
+    .keypad button#swap              { background: #ddd; }
+    .keypad button[data-action="divide"],
+    .keypad button[data-action="multiply"],
+    .keypad button[data-action="minus"],
+    .keypad button[data-action="plus"] {
+      background: #f1c40f;
+      color: white;
+    }
+    .keypad button[data-action="equal"] {
+      background: #4caf50;
+      color: white;
+      grid-column: span 2;
+    }
+
+    /* ========== 반응형 ========== */
+    @media (max-width: 400px) {
+      .container { padding: 16px; }
+      .keypad button { font-size: 16px; padding: 10px; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
+
+    <!-- 1번 패널 -->
     <div class="rate-panel" id="panel1">
       <span class="flag" id="flag1">🇺🇸</span>
       <span class="code"  id="code1">USD</span>
       <span class="amount" id="amt1">0</span>
     </div>
+
+    <!-- 2번 패널 -->
     <div class="rate-panel" id="panel2">
       <span class="flag" id="flag2">🇰🇷</span>
       <span class="code"  id="code2">KRW</span>
       <span class="amount" id="amt2">0</span>
     </div>
+
     <div id="rateTime" class="stamp">조회 시간: --</div>
 
     <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button id="swap">⟳</button>
+      <button data-action="divide">÷</button>
 
       <button data-key="7">7</button>
       <button data-key="8">8</button>
-      <button data-action="divide">÷</button>
+      <button data-key="9">9</button>
       <button data-action="multiply">×</button>
 
       <button data-key="4">4</button>
@@ -55,6 +143,7 @@
     let input  = '';
     let base   = 'USD', target = 'KRW';
 
+    // DOM 참조
     const flag1 = document.getElementById('flag1');
     const code1 = document.getElementById('code1');
     const amt1  = document.getElementById('amt1');
@@ -64,13 +153,13 @@
     const rateTime = document.getElementById('rateTime');
     const swapBtn  = document.getElementById('swap');
 
-    function updateInputDisplay(){
+    function updateInputDisplay() {
       amt1.innerText = input || '0';
     }
 
-    async function fetchAndConvert(){
+    async function fetchAndConvert() {
       try {
-        // ① 완전 새로 조합된 URL
+        // 매번 base/target 에 맞춰 URL 완전 재생성
         const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${target}`;
         const fullUrl = PROXY + encodeURIComponent(apiUrl + '&_=' + Date.now());
 
@@ -80,8 +169,8 @@
         const rate = json.rates[target];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        const result = eval(input || '0') * rate;
-        amt2.innerText = Math.round(result).toLocaleString();
+        const kr = eval(input || '0') * rate;
+        amt2.innerText = Math.round(kr).toLocaleString();
         rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
 
       } catch (e) {
@@ -89,8 +178,8 @@
       }
     }
 
+    // 스왑 기능
     swapBtn.addEventListener('click', () => {
-      // 패널 스왑
       [base, target] = [target, base];
       [flag1.textContent, flag2.textContent] = [flag2.textContent, flag1.textContent];
       [code1.textContent, code2.textContent] = [code2.textContent, code1.textContent];
@@ -98,6 +187,7 @@
       updateInputDisplay();
     });
 
+    // 키패드 클릭 핸들러
     document.querySelector('.keypad').addEventListener('click', e => {
       if (e.target.tagName !== 'BUTTON') return;
       const action = e.target.dataset.action;
@@ -120,6 +210,7 @@
       if (action === 'equal') fetchAndConvert();
     });
 
+    // 초기 표시
     updateInputDisplay();
   })();
   </script>
