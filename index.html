@@ -64,7 +64,7 @@
     .keys button.equal    {
       background: #4caf50;
       color: #fff;
-      grid-column: 1 / span 2; /* 왼쪽 두 칸에 걸쳐 */
+      grid-column: 1 / span 2;
     }
     .keys button:active { background: #ddd; }
   </style>
@@ -105,9 +105,9 @@
       <button onclick="onNum('1')">1</button>
       <button onclick="onNum('2')">2</button>
       <button onclick="onNum('3')">3</button>
-      <button onclick="onNum('0')">0</button> <!-- 0 위치 변경 -->
+      <button onclick="onNum('0')">0</button>
 
-      <button class="equal" onclick="onConvert()">=</button>  <!-- = 위치 변경 -->
+      <button class="equal" onclick="onConvert()">=</button>
       <button onclick="onNum('.')">.</button>
     </div>
   </div>
@@ -138,18 +138,18 @@
       updateUSD(); krwDisp.innerText = '0';
     }
     async function onConvert() {
-      // 사칙연산 마무리
+      // 내부 계산
       if (op && prev!==null) {
         curr = String(eval(prev + op + curr));
         prev = null; op = null;
         updateUSD();
       }
-      // 환율 API 호출
+      // 직접 exchangerate.host 호출
       try {
         const res  = await fetch(
-          'https://api.exchangerate.host/latest?base=USD&symbols=KRW',
-          { mode: 'cors', cache: 'no-cache' }
+          'https://api.exchangerate.host/latest?base=USD&symbols=KRW'
         );
+        if (!res.ok) throw new Error(res.status);
         const json = await res.json();
         const rate = json.rates.KRW;
         const krw  = (parseFloat(curr)*rate)
@@ -164,7 +164,6 @@
       }
     }
 
-    // 초기화
     updateUSD();
   </script>
 </body>
