@@ -117,6 +117,7 @@
     </div>
   </div>
 
+  <!-- 이하 생략… -->
   <script>
   (function(){
     let input  = '';
@@ -129,8 +130,7 @@
           code2    = document.getElementById('code2'),
           amt2     = document.getElementById('amt2'),
           rateTime = document.getElementById('rateTime'),
-          keypad   = document.querySelector('.keypad'),
-          swapBtn  = document.getElementById('swap');
+          keypad   = document.querySelector('.keypad');
 
     function updateInput() {
       amt1.innerText = input || '0';
@@ -138,61 +138,58 @@
 
     async function fetchAndConvert() {
       try {
-        const apiUrl = `https://api.exchangerate.host/latest?base=${base}&symbols=${target}`;
-        const res    = await fetch(apiUrl);
+        // convert 엔드포인트로 한 방에 계산
+        const url = `https://api.exchangerate.host/convert?from=${base}&to=${target}&amount=${encodeURIComponent(input||0)}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error(res.status);
-        const json   = await res.json();
-        const rate   = json.rates?.[target];
-        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
+        const json = await res.json();
+        // json.result에 바로 계산 결과가 들어옵니다
+        if (typeof json.result !== 'number') throw new Error('환율 데이터 이상');
 
-        const result = (eval(input || '0') * rate);
-        amt2.innerText    = Math.round(result).toLocaleString();
-        rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
+        amt2.innerText    = Math.round(json.result).toLocaleString();
+        // API에서 준 date 를 쓰거나, 현재 시각을 사용
+        rateTime.innerText = '조회 시간: ' + (json.date 
+          ? new Date(json.date).toLocaleString() 
+          : new Date().toLocaleString()
+        );
       } catch (e) {
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
       }
     }
 
-    // 키패드 클릭 핸들러
     keypad.addEventListener('click', e=>{
-      if (e.target.tagName!=='BUTTON') return;
-      const action = e.target.dataset.action,
-            key    = e.target.dataset.key;
+      if (e.target.tagName !== 'BUTTON') return;
+      const a = e.target.dataset.action, k = e.target.dataset.key;
 
-      switch(action) {
-        case 'clear':  input = ''; updateInput(); break;
-        case 'back':   input = input.slice(0,-1); updateInput(); break;
-        case 'decimal':
-          if (!input.includes('.')) input+='.';
-          updateInput(); break;
-        case 'divide':
-        case 'multiply':
-        case 'minus':
-        case 'plus':
-          input += e.target.textContent;
-          updateInput(); break;
-        case 'swap':
-          // 통화 스왑
-          [base,target] = [target,base];
-          [flag1.textContent,flag2.textContent] = [flag2.textContent,flag1.textContent];
-          [code1.textContent,code2.textContent] = [code2.textContent,code1.textContent];
-          [amt1.textContent,amt2.textContent]     = [amt2.textContent,amt1.textContent];
-          updateInput();
-          break;
-        case 'equal':
-          fetchAndConvert();
-          break;
-        default:
-          if (key) {
-            input += key;
-            updateInput();
-          }
+      if (a === 'clear') {
+        input = ''; updateInput();
+      } else if (a === 'back') {
+        input = input.slice(0,-1); updateInput();
+      } else if (a === 'decimal') {
+        if (!input.includes('.')) input += '.';
+        updateInput();
+      } else if (/^(divide|multiply|minus|plus)$/.test(a)) {
+        input += e.target.textContent;
+        updateInput();
+      } else if (a === 'swap') {
+        // 통화 스왑
+        [base, target] = [target, base];
+        [flag1.textContent, flag2.textContent] = [flag2.textContent, flag1.textContent];
+        [code1.textContent, code2.textContent] = [code2.textContent, code1.textContent];
+        [amt1.textContent, amt2.textContent]     = [amt2.textContent, amt1.textContent];
+        updateInput();
+      } else if (a === 'equal') {
+        fetchAndConvert();
+      } else if (k) {
+        input += k;
+        updateInput();
       }
     });
 
-    // 초기 디스플레이
+    // 초기 표시
     updateInput();
   })();
   </script>
 </body>
 </html>
+
