@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>환율계산멍🐶</title>
   <style>
-    /* --- 베이스 레이아웃 --- */
     body {
       margin:0;
       background:#f0f2f5;
@@ -20,8 +19,7 @@
       padding:20px;
     }
     h1 {
-      text-align:center;margin:0 0 16px;
-      font-size:24px;
+      text-align:center;margin:0 0 16px;font-size:24px;
     }
     .rate-panel {
       display:flex;justify-content:space-between;align-items:center;
@@ -45,16 +43,14 @@
       border:none;border-radius:8px;
       background:#e0e0e0;cursor:pointer;
     }
-    .keypad button[data-action="clear"] { background:#e74c3c;color:#fff; }
-    .keypad button[data-action="back"]  { background:#ddd; }
+    .keypad button[data-action="clear"]  { background:#e74c3c; color:#fff; }
+    .keypad button[data-action="back"]   { background:#ddd; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"] {
-      background:#f1c40f;color:#fff;
-    }
-    .keypad button[data-action="equal"] {
-      background:#4caf50;color:#fff;
+    .keypad button[data-action="plus"]   { background:#f1c40f; color:#fff; }
+    .keypad button[data-action="equal"]  {
+      background:#4caf50; color:#fff;
       grid-column: span 2;
     }
   </style>
@@ -63,22 +59,20 @@
   <div class="container">
     <h1>환율계산멍🐶</h1>
 
-    <!-- USD 입력 -->
     <div class="rate-panel">
       <span class="flag">🇺🇸</span>
       <span class="code">USD</span>
       <span id="usdValue" class="amount">0</span>
     </div>
-    <!-- KRW 결과 -->
+
     <div class="rate-panel">
       <span class="flag">🇰🇷</span>
       <span class="code">KRW</span>
       <span id="krwValue" class="amount">0</span>
     </div>
-    <!-- 타임스탬프 -->
+
     <div id="rateTime" class="stamp">조회 시간: –</div>
 
-    <!-- 키패드 -->
     <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -107,9 +101,7 @@
 
   <script>
   (function(){
-    // 1) 본인 Workers 프록시 URL
-    const WORKER_PROXY = 'https://YOUR_WORKER_SUBDOMAIN.workers.dev?url=';
-    // 2) 키 불필요 무료 API
+    // ★ 이걸 OPEN-ER 무료 API로 고정
     const API_URL = 'https://open.er-api.com/v6/latest/USD';
 
     let inputStr = '';
@@ -120,10 +112,8 @@
 
     async function fetchAndConvert() {
       try {
-        // Worker 프록시 + 캐시 버스터
-        const proxyUrl = WORKER_PROXY
-          + encodeURIComponent(API_URL + '?_=' + Date.now());
-        const res = await fetch(proxyUrl);
+        // 캐시 방지용 타임스탬프만 추가
+        const res = await fetch(API_URL + '?_=' + Date.now());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (!json.rates || typeof json.rates.KRW !== 'number') {
@@ -136,11 +126,12 @@
           Math.round(result).toLocaleString();
         document.getElementById('rateTime').innerText =
           '조회 시간: ' + new Date().toLocaleString();
+
       } catch (e) {
         alert(
-          '환율 정보를 가져오는 데 실패했어요.\n'
-          + '오류: ' + e.message + '\n'
-          + '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
+          '환율 정보를 가져오는 데 실패했어요.\n' +
+          '오류: ' + e.message + '\n' +
+          '인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.'
         );
       }
     }
@@ -148,39 +139,25 @@
     document.querySelector('.keypad')
       .addEventListener('click', e => {
         if (e.target.tagName !== 'BUTTON') return;
-        const action = e.target.dataset.action;
-        const key    = e.target.dataset.key;
+        const { action, key } = e.target.dataset;
 
         if (action === 'clear') {
-          inputStr = '';
-          updateDisplay();
-          return;
+          inputStr = ''; updateDisplay(); return;
         }
         if (action === 'back') {
-          inputStr = inputStr.slice(0, -1);
-          updateDisplay();
-          return;
+          inputStr = inputStr.slice(0,-1); updateDisplay(); return;
         }
         if (action === 'decimal') {
           if (!inputStr.includes('.')) inputStr += '.';
-          updateDisplay();
-          return;
+          updateDisplay(); return;
         }
         if (/^(divide|multiply|minus|plus)$/.test(action)) {
-          const map = {
-            divide:   '/',
-            multiply: '*',
-            minus:    '-',
-            plus:     '+'
-          };
-          inputStr += map[action];
-          updateDisplay();
-          return;
+          const M = { divide:'/', multiply:'*', minus:'-', plus:'+' };
+          inputStr += M[action];
+          updateDisplay(); return;
         }
         if (key) {
-          inputStr += key;
-          updateDisplay();
-          return;
+          inputStr += key; updateDisplay(); return;
         }
         if (action === 'equal') {
           fetchAndConvert();
