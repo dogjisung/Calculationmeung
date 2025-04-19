@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>환율계산멍🐶</title>
   <style>
-    /* --- 레이아웃 --- */
+    /* 페이지 전체 레이아웃 */
     body {
       margin: 0;
       background: #f0f2f5;
@@ -28,7 +28,8 @@
       margin: 0 0 12px;
       font-size: 24px;
     }
-    /* --- 통화 디스플레이 --- */
+
+    /* 통화 디스플레이 */
     .display {
       margin-bottom: 12px;
     }
@@ -70,7 +71,8 @@
       color: #888;
       margin-bottom: 8px;
     }
-    /* --- 버튼 패드 --- */
+
+    /* 버튼 패드 */
     .keypad {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -100,7 +102,7 @@
   <div class="container">
     <h1>환율계산멍🐶</h1>
     <div class="display">
-      <!-- USD 표시 -->
+      <!-- USD -->
       <div class="panel">
         <div class="left">
           <span class="flag">🇺🇸</span>
@@ -110,7 +112,7 @@
       </div>
       <div class="label">USD 입력</div>
 
-      <!-- KRW 표시 -->
+      <!-- KRW -->
       <div class="panel">
         <div class="left">
           <span class="flag">🇰🇷</span>
@@ -120,11 +122,11 @@
       </div>
       <div class="label">환산 결과</div>
 
-      <!-- 타임스탬프 -->
+      <!-- 시간 -->
       <div id="timeStamp"></div>
     </div>
 
-    <!-- 숫자/연산자 버튼 -->
+    <!-- 키패드 -->
     <div class="keypad">
       <button class="btn-clear"     data-action="clear">C</button>
       <button class="btn-back"      data-action="back">&larr;</button>
@@ -157,23 +159,19 @@
     const krwDisp = document.getElementById("krwDisplay");
     const timeStamp = document.getElementById("timeStamp");
 
-    function updateUsdDisplay() {
+    function updateUsd() {
       usdDisp.innerText = expr || "0";
     }
 
-    async function fetchAndConvert(value) {
+    async function convertAndShow(val) {
       try {
-        // CORS 문제 없이 바로 fetch
-        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW", { mode: 'cors' });
-        if (!res.ok) throw new Error("네트워크 오류");
-        const data = await res.json();
-        const rate = data.rates.KRW;
-        const krw = Math.round(value * rate).toLocaleString();
-        krwDisp.innerText = krw;
-
-        const now = new Date();
-        timeStamp.innerText = "기준: " + now.toLocaleString();
-      } catch (e) {
+        const res = await fetch("https://api.exchangerate.host/latest?base=USD&symbols=KRW");
+        if (!res.ok) throw new Error();
+        const json = await res.json();
+        const rate = json.rates.KRW;
+        krwDisp.innerText = Math.round(val * rate).toLocaleString();
+        timeStamp.innerText = "기준: " + new Date().toLocaleString();
+      } catch {
         alert("환율 정보를 가져오는 데 실패했어요.\n인터넷 연결을 확인하거나 잠시 후 다시 시도해주세요.");
       }
     }
@@ -181,31 +179,25 @@
     document.querySelectorAll(".keypad button").forEach(btn => {
       btn.addEventListener("click", () => {
         const v = btn.dataset.value, act = btn.dataset.action;
-
         if (v != null) {
           expr += v;
-          updateUsdDisplay();
+          updateUsd();
         } else if (act === "clear") {
-          expr = "";
-          updateUsdDisplay();
-          krwDisp.innerText = "0";
-          timeStamp.innerText = "";
+          expr = ""; updateUsd();
+          krwDisp.innerText = "0"; timeStamp.innerText = "";
         } else if (act === "back") {
-          expr = expr.slice(0, -1);
-          updateUsdDisplay();
+          expr = expr.slice(0,-1); updateUsd();
         } else if (act === "equal") {
           let usd;
-          try { usd = eval(expr || "0"); }
+          try { usd = eval(expr)||0; }
           catch { usd = 0; }
-          expr = String(usd);
-          updateUsdDisplay();
-          fetchAndConvert(usd);
+          expr = String(usd); updateUsd();
+          convertAndShow(usd);
         }
       });
     });
 
-    // 초기화
-    updateUsdDisplay();
+    updateUsd();
   </script>
 </body>
 </html>
