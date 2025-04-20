@@ -80,22 +80,18 @@
       <button data-action="back">←</button>
       <button data-action="swap">🔄</button>
       <button data-action="divide">÷</button>
-
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="multiply">×</button>
-
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="minus">−</button>
-
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-action="plus">＋</button>
-
       <button data-key="0">0</button>
       <button data-action="decimal">.</button>
       <button data-action="equal">＝</button>
@@ -114,54 +110,57 @@
           ur = document.getElementById('unitRate'),
           kb = document.getElementById('keypad');
 
-    let inputStr='';
+    let inputStr = '';
 
     function updateDisplay(){
-      v1.innerText = inputStr||'0';
-    }
-
-    function fmtKR(num){
-      const units=['','만','억','조','경'];
-      if(num<10000) return ''+num;
-      let s=(''+num).padStart(Math.ceil(num.toString().length/4)*4,'0');
-      const parts=[];
-      for(let i=0;i<s.length;i+=4) parts.push(s.substr(i,4));
-      return parts.map((p,i)=>{
-        const n=parseInt(p,10);
-        return n
-          ? n + (units[parts.length-1-i]||'')
-          : '';
-      }).join('');
+      v1.innerText = inputStr || '0';
     }
 
     async function fetchAndConvert(){
       const expr = inputStr
         .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
-      let amt=0;
-      try{ amt=Function('"use strict";return('+ (expr||'0') +')')(); }
-      catch{ amt=0; }
-      if(isNaN(amt)) amt=0;
+      let amt = 0;
+      try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
+      catch { amt = 0; }
+      if (isNaN(amt)) amt = 0;
 
-      const from=c1.innerText, to=c2.innerText;
+      const from = c1.innerText, to = c2.innerText;
       try {
         const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
-        if(!res.ok) throw new Error(res.status);
-        const js = await res.json();
+        if (!res.ok) throw new Error(res.status);
+        const js  = await res.json();
         const rate = js.rates[to];
-        if(typeof rate !== 'number') throw new Error('환율 데이터 이상');
+        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        const conv = Math.round(amt * rate);
-        v2.innerText = (to==='KRW'
-          ? fmtKR(conv)
-          : conv.toLocaleString());
+        // 실제 요청 시각으로 표시
+        rt.innerText = '조회 시간: ' + new Date().toLocaleString();
 
-        // **여기를 new Date()로 변경**
-        rt.innerText = '조회 시간: '+ new Date().toLocaleString();
-
-        if(to==='KRW'){
+        // 단위 환율
+        if (to === 'KRW') {
           ur.innerText = `1 ${from} = ${Math.round(rate).toLocaleString()} ${to}`;
         } else {
           ur.innerText = `1 ${from} = ${rate.toFixed(6)} ${to}`;
+        }
+
+        // 금액 변환
+        const result = amt * rate;
+        if (to === 'KRW') {
+          // KRW는 한글 단위 표시(만/억/조...)
+          function fmtKR(num){
+            const u=['','만','억','조','경'];
+            if(num<10000) return ''+num;
+            let s=(''+Math.round(num)).padStart(Math.ceil(num.toString().length/4)*4,'0');
+            const parts=[];
+            for(let i=0;i<s.length;i+=4) parts.push(s.substr(i,4));
+            return parts.map((p,i)=>{
+              const n=parseInt(p,10);
+              return n? n+u[parts.length-1-i]: '';
+            }).join('');
+          }
+          v2.innerText = fmtKR(result);
+        } else {
+          // USD는 소수점 6자리까지, 불필요 0 제거
+          v2.innerText = result.toFixed(6).replace(/\.?0+$/,'');
         }
       } catch(e){
         alert('환율 정보를 가져오는 데 실패했어요.\n오류:'+ e.message);
@@ -169,42 +168,43 @@
     }
 
     function swapPanels(){
-      [f1.innerText,f2.innerText]=[f2.innerText,f1.innerText];
-      [c1.innerText,c2.innerText]=[c2.innerText,c1.innerText];
-      [v1.innerText,v2.innerText]=[v2.innerText,v1.innerText];
-      inputStr=''; updateDisplay();
-      rt.innerText='조회 시간: --';
-      ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
+      [f1.innerText,f2.innerText] = [f2.innerText,f1.innerText];
+      [c1.innerText,c2.innerText] = [c2.innerText,c1.innerText];
+      [v1.innerText,v2.innerText] = [v2.innerText,v1.innerText];
+      inputStr='';
+      updateDisplay();
+      rt.innerText = '조회 시간: --';
+      ur.innerText = `1 ${c2.innerText} = -- ${c1.innerText}`;
       fetchAndConvert();
     }
 
-    kb.addEventListener('click',e=>{
-      if(e.target.tagName!=='BUTTON') return;
-      const a=e.target.dataset.action, k=e.target.dataset.key;
-      if(a==='clear'){
+    kb.addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') return;
+      const a = e.target.dataset.action, k = e.target.dataset.key;
+      if (a === 'clear'){
         inputStr=''; updateDisplay();
         v2.innerText='0';
         rt.innerText='조회 시간: --';
         ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
       }
-      else if(a==='back'){
-        inputStr=inputStr.slice(0,-1); updateDisplay();
+      else if (a === 'back'){
+        inputStr = inputStr.slice(0,-1); updateDisplay();
       }
-      else if(['divide','multiply','minus','plus'].includes(a)){
-        inputStr+=e.target.textContent; updateDisplay();
+      else if (['divide','multiply','minus','plus'].includes(a)){
+        inputStr += e.target.textContent; updateDisplay();
       }
-      else if(a==='decimal'){
-        if(!inputStr.includes('.')) inputStr+='.';
+      else if (a === 'decimal'){
+        if (!inputStr.includes('.')) inputStr += '.';
         updateDisplay();
       }
-      else if(a==='swap'){
+      else if (a === 'swap'){
         swapPanels();
       }
-      else if(a==='equal'){
+      else if (a === 'equal'){
         fetchAndConvert();
       }
-      else if(k){
-        inputStr+=k; updateDisplay();
+      else if (k){
+        inputStr += k; updateDisplay();
       }
     });
 
