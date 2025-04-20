@@ -6,7 +6,7 @@
   <title>환율계산</title>
   <style>
     html, body {
-      margin: 0; padding: 0;
+      margin:0; padding:0;
       width:100vw; height:100vh;
       overflow:hidden;
       background:#fff;
@@ -17,7 +17,7 @@
       width:100%; height:100%;
       max-width:360px; margin:0 auto;
     }
-    .top-section {
+    .top {
       flex:1; display:flex; flex-direction:column;
       justify-content:center; border-bottom:1px solid #ddd;
     }
@@ -60,8 +60,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- 상단 -->
-    <div class="top-section">
+    <div class="top">
       <div class="rate-panel">
         <span id="flag1" class="flag">🇺🇸</span>
         <span id="code1" class="code">USD</span>
@@ -76,7 +75,6 @@
       <div id="unitRate" class="stamp">1 KRW = -- USD</div>
     </div>
 
-    <!-- 키패드 -->
     <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -115,37 +113,32 @@
           rt = document.getElementById('rateTime'),
           ur = document.getElementById('unitRate'),
           kb = document.getElementById('keypad');
-    let inputStr = '';
+
+    let inputStr='';
 
     function updateDisplay(){
-      v1.innerText = inputStr || '0';
+      v1.innerText = inputStr||'0';
     }
 
-    // 만·억·조·경 표기
     function fmtKR(num){
       const units=['','만','억','조','경'];
       if(num<10000) return ''+num;
-      let s = ''+num;
-      const pad=(4-s.length%4)%4;
-      s='0'.repeat(pad)+s;
+      let s=(''+num).padStart(Math.ceil(num.toString().length/4)*4,'0');
       const parts=[];
       for(let i=0;i<s.length;i+=4) parts.push(s.substr(i,4));
-      let out='';
-      parts.forEach((p,i)=>{
+      return parts.map((p,i)=>{
         const n=parseInt(p,10);
-        if(n){
-          const u=units[parts.length-1-i]||'';
-          out+=n+u;
-        }
-      });
-      return out||'0';
+        return n
+          ? n + (units[parts.length-1-i]||'')
+          : '';
+      }).join('');
     }
 
     async function fetchAndConvert(){
       const expr = inputStr
         .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
       let amt=0;
-      try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
+      try{ amt=Function('"use strict";return('+ (expr||'0') +')')(); }
       catch{ amt=0; }
       if(isNaN(amt)) amt=0;
 
@@ -155,13 +148,21 @@
         if(!res.ok) throw new Error(res.status);
         const js = await res.json();
         const rate = js.rates[to];
-        if(typeof rate!=='number') throw new Error('환율 데이터 이상');
+        if(typeof rate !== 'number') throw new Error('환율 데이터 이상');
+
         const conv = Math.round(amt * rate);
-        v2.innerText = fmtKR(conv);
-        rt.innerText = '조회 시간: '+ new Date(js.date).toLocaleString();
-        // 단위당 환율: 1 to = 1/rate from
-        const inv = 1/rate;
-        ur.innerText = `1 ${to} = ${inv.toFixed(6)} ${from}`;
+        v2.innerText = (to==='KRW'
+          ? fmtKR(conv)
+          : conv.toLocaleString());
+
+        // **여기를 new Date()로 변경**
+        rt.innerText = '조회 시간: '+ new Date().toLocaleString();
+
+        if(to==='KRW'){
+          ur.innerText = `1 ${from} = ${Math.round(rate).toLocaleString()} ${to}`;
+        } else {
+          ur.innerText = `1 ${from} = ${rate.toFixed(6)} ${to}`;
+        }
       } catch(e){
         alert('환율 정보를 가져오는 데 실패했어요.\n오류:'+ e.message);
       }
@@ -173,7 +174,8 @@
       [v1.innerText,v2.innerText]=[v2.innerText,v1.innerText];
       inputStr=''; updateDisplay();
       rt.innerText='조회 시간: --';
-      ur.innerText='1 KRW = -- USD';
+      ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
+      fetchAndConvert();
     }
 
     kb.addEventListener('click',e=>{
@@ -181,8 +183,9 @@
       const a=e.target.dataset.action, k=e.target.dataset.key;
       if(a==='clear'){
         inputStr=''; updateDisplay();
-        v2.innerText='0'; rt.innerText='조회 시간: --';
-        ur.innerText='1 KRW = -- USD';
+        v2.innerText='0';
+        rt.innerText='조회 시간: --';
+        ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
       }
       else if(a==='back'){
         inputStr=inputStr.slice(0,-1); updateDisplay();
@@ -194,11 +197,11 @@
         if(!inputStr.includes('.')) inputStr+='.';
         updateDisplay();
       }
-      else if(a==='equal'){
-        fetchAndConvert();
-      }
       else if(a==='swap'){
         swapPanels();
+      }
+      else if(a==='equal'){
+        fetchAndConvert();
       }
       else if(k){
         inputStr+=k; updateDisplay();
@@ -206,6 +209,7 @@
     });
 
     updateDisplay();
+    fetchAndConvert();
   })();
   </script>
 </body>
