@@ -1,121 +1,106 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>환율계산멍🐶</title>
   <style>
+    /* 페이지 전체를 100% 높이/너비로 잡고 스크롤 금지 */
     html, body {
       margin: 0;
       padding: 0;
-      height: 100%;
-      background: #fff;               /* 페이지 배경을 흰색으로 */
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
-    }
-    .container {
-      max-width: 360px;
-      margin: 0 auto;                 /* 위·아래 여백 0 */
-      padding: 16px;
-      background: #fff;
-      border-radius: 0;               /* 전체 화면으로 보이게 각진 모양으로 */
-      box-shadow: none;               /* 섀도우 제거 */
-      min-height: 100vh;              /* 화면 전체 높이 차지 */
-      box-sizing: border-box;
-    }
-    h1 {
-      text-align: center;
-      margin: 0 0 16px;
-      font-size: 24px;
-    }
-    .rate-panel {
-      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000; /* 검은 배경 */
       display: flex;
       align-items: center;
-      padding: 12px;
-      background: #f7f7f7;
-      border-radius: 8px;
-      margin-bottom: 8px;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
-    .flag {
-      font-size: 24px;
-      margin-right: 8px;
+    /* 계산기 껍데기 */
+    .container {
+      width: 100%;
+      max-width: 400px;
+      background: #202124;
+      border-radius: 0;
+      box-shadow: none;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
     }
-    .code {
-      font-weight: 500;
-      color: #555;
-      flex: 1;
+    /* 결과 패널 */
+    .rates {
+      display: flex;
+      flex-direction: column;
     }
-    .amount {
-      font-weight: 700;
-      font-size: 18px;
+    .rate-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid #3c4043;
+      font-size: 20px;
     }
-    .swap-btn {
-      position: absolute;
-      right: 8px;
-      top: 8px;
+    .rate-panel button {
       background: none;
       border: none;
+      color: #fff;
       font-size: 20px;
       cursor: pointer;
     }
-    .stamp {
-      text-align: center;
-      color: #888;
-      font-size: 12px;
-      margin: 8px 0 16px;
-    }
+    /* 키패드 */
     .keypad {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      grid-gap: 8px;
+      grid-gap: 1px;
+      background: #3c4043;
     }
     .keypad button {
-      padding: 16px 0;
-      font-size: 18px;
+      padding: 24px 0;
+      font-size: 20px;
       border: none;
-      border-radius: 8px;
+      background: #5f6368;
+      color: #fff;
       cursor: pointer;
-      background: #e0e0e0;
     }
-    .keypad button[data-action="clear"] {
-      background: #f44336; color: #fff;
-    }
+    .keypad button[data-action="clear"] { background: #d93025; }
     .keypad button[data-action="back"],
     .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"] {
-      background: #ccc;
-    }
+    .keypad button[data-action="swap"] { background: #5f6368; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"] {
-      background: #fbc02d;
-    }
+    .keypad button[data-action="plus"] { background: #fbbc04; color:#000; }
     .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
+      background: #188038;
       grid-column: span 2;
     }
+    /* 소수점(.)을 + 아래로 */
+    button[data-action="decimal"] { grid-column: 4; grid-row: 5; }
+    /* 0 자리 넓히기, = 아래로 */
+    button[data-key="0"] { grid-column: 1 / span 2; }
+    button[data-action="equal"] { grid-row: 5; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>환율계산멍🐶</h1>
-    <div class="rate-panel">
-      <span class="flag">🇺🇸</span>
-      <span class="code">USD</span>
-      <span id="usdValue" class="amount">0</span>
-      <button class="swap-btn" data-action="swap">🔄</button>
+    <div class="rates">
+      <div class="rate-panel">
+        <span id="fromCode">USD</span>
+        <span id="fromVal">0</span>
+        <button data-action="swap">🔄</button>
+      </div>
+      <div class="rate-panel">
+        <span id="toCode">KRW</span>
+        <span id="toVal">0</span>
+      </div>
     </div>
-    <div class="rate-panel">
-      <span class="flag">🇰🇷</span>
-      <span class="code">KRW</span>
-      <span id="krwValue" class="amount">0</span>
-    </div>
-    <div id="rateTime" class="stamp">조회 시간: --</div>
-    <div class="keypad">
+    <div class="keypad" id="pad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
-      <button data-action="decimal">.</button>
+      <button data-action="swap">⇅</button>
       <button data-action="divide">÷</button>
 
       <button data-key="7">7</button>
@@ -135,74 +120,71 @@
 
       <button data-key="0">0</button>
       <button data-action="equal">＝</button>
+      <button data-action="decimal">.</button>
     </div>
   </div>
 
   <script>
   (function(){
-    const usdVal  = document.getElementById('usdValue');
-    const krwVal  = document.getElementById('krwValue');
-    const timeEl  = document.getElementById('rateTime');
-    const keypad  = document.querySelector('.keypad');
-    const swapBtn = document.querySelector('.swap-btn');
-    let input = '';
+    const fromCode = document.getElementById('fromCode'),
+          toCode   = document.getElementById('toCode'),
+          fromVal  = document.getElementById('fromVal'),
+          toVal    = document.getElementById('toVal'),
+          pad      = document.getElementById('pad');
+
+    let expr = '';
 
     function render() {
-      usdVal.innerText = input || '0';
+      fromVal.innerText = expr || '0';
     }
 
-    async function fetchConvert() {
+    async function convert() {
+      const amt = parseFloat(expr)||0;
       try {
-        const amount = parseFloat(input) || 0;
-        const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCode.innerText}`);
         if (!res.ok) throw new Error(res.status);
-        const data = await res.json();
-        const rate = data.rates.KRW;
-        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
-        krwVal.innerText = Math.round(amount * rate).toLocaleString();
-        timeEl.innerText = '조회 시간: ' + new Date().toLocaleString();
+        const json = await res.json();
+        const rate = json.rates[toCode.innerText];
+        if (typeof rate!=='number') throw new Error('환율 데이터 이상');
+        toVal.innerText = Math.round(amt * rate).toLocaleString();
       } catch(e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
       }
     }
 
-    function swap() {
-      // 스왑은 USD↔KRW 패널의 텍스트만 바꿈
-      const t1 = usdVal.innerText;
-      usdVal.innerText = krwVal.innerText;
-      krwVal.innerText = t1;
-      input = '';
+    function swapPanels() {
+      [fromCode.innerText, toCode.innerText] = [toCode.innerText, fromCode.innerText];
+      [fromVal.innerText, toVal.innerText]   = [toVal.innerText, fromVal.innerText];
+      expr = '';
       render();
-      timeEl.innerText = '조회 시간: --';
     }
 
-    keypad.addEventListener('click', e=>{
-      if (e.target.tagName !== 'BUTTON') return;
-      const act = e.target.dataset.action;
-      const key = e.target.dataset.key;
+    pad.addEventListener('click', e=>{
+      if (e.target.tagName!=='BUTTON') return;
+      const act = e.target.dataset.action,
+            key = e.target.dataset.key;
       if (act==='clear') {
-        input=''; krwVal.innerText='0'; timeEl.innerText='조회 시간: --'; render();
+        expr=''; toVal.innerText='0'; render();
       }
       else if (act==='back') {
-        input = input.slice(0,-1); render();
+        expr=expr.slice(0,-1); render();
       }
       else if (act==='decimal') {
-        if (!input.includes('.')) input+='.'; render();
+        if (!expr.includes('.')) expr+='.'; render();
       }
       else if (['divide','multiply','minus','plus'].includes(act)) {
-        input += e.target.textContent; render();
+        expr+=e.target.textContent; render();
       }
       else if (act==='equal') {
-        fetchConvert();
+        convert();
       }
       else if (act==='swap') {
-        swap();
+        swapPanels();
       }
       else if (key) {
-        input += key; render();
+        expr+=key; render();
       }
     });
-    swapBtn.addEventListener('click', swap);
     render();
   })();
   </script>
