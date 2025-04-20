@@ -15,7 +15,7 @@
     }
     .container {
       width: 100%; max-width: 360px;
-      background: white; border-radius: 16px;
+      background: white; border-radius: 16px;ㅠ
       box-shadow: 0 4px 16px rgba(0,0,0,0.1);
       padding: 20px; position: relative;
     }
@@ -44,7 +44,7 @@
       margin-bottom: 12px;
     }
     /* 키패드 */
-    .keypad {
+    .keypad 
       display: grid;
       grid-template-columns: repeat(4,1fr);
       grid-gap: 8px;
@@ -127,35 +127,40 @@
       val1.innerText = inputStr || '0';
     }
 
-    async function fetchAndConvert() {
-      // eval 로 수식 계산 → 숫자
-      let amount = 0;
-      try {
-        amount = parseFloat(eval(inputStr)) || 0;
-      } catch {
-        amount = 0;
-      }
+async function fetchAndConvert() {
+  // 1) 화면에 보이는 수식(eval) → 숫자
+  let amount;
+  try {
+    amount = parseFloat( eval(inputStr) ) || 0;
+  } catch {
+    amount = 0;
+  }
 
-      const fromCur = code1.innerText;
-      const toCur   = code2.innerText;
+  // 2) 현재 위칸, 아래칸 통화코드
+  const fromCur = code1.innerText;
+  const toCur   = code2.innerText;
 
-      try {
-        const res = await fetch(
-          `${CONVERT_API}?from=${fromCur}&to=${toCur}&amount=${amount}`
-        );
-        if (!res.ok) throw new Error(res.status);
-        const json = await res.json();
-        if (typeof json.result !== 'number') throw new Error('환율 데이터 이상');
+  try {
+    // ✏️ 최신 환율 가져오기 (CORS OK)
+    const res = await fetch(
+      `https://api.exchangerate.host/latest?base=${fromCur}&symbols=${toCur}`
+    );
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
 
-        // 결과 표시
-        val2.innerText = Math.round(json.result).toLocaleString();
-        const dateStr = json.date || new Date().toISOString();
-        rateTime.innerText = '조회 시간: ' +
-          new Date(dateStr).toLocaleString();
-      } catch (e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
-      }
-    }
+    // 3) json.rates[toCur] 유효성 체크
+    const rate = json.rates?.[toCur];
+    if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
+
+    // 4) 계산 & 표시
+    const converted = amount * rate;
+    val2.innerText     = Math.round(converted).toLocaleString();
+    rateTime.innerText = '조회 시간: ' + new Date(json.date).toLocaleString();
+
+  } catch (e) {
+    alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+  }
+}
 
     // Swap 버튼
     document.getElementById('swapBtn').addEventListener('click', ()=>{
