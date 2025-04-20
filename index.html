@@ -5,15 +5,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산멍🐶</title>
   <style>
+    /* 화면 전체를 Flex로 중앙 정렬 */
     body {
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
       background: #f0f2f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
     .container {
-      max-width: 360px;
-      margin: 40px auto;
+      width: 360px;
+      margin: 0;               /* 위/아래 공백 제거 */
       padding: 24px;
       background: #fff;
       border-radius: 16px;
@@ -25,6 +30,7 @@
       font-size: 24px;
     }
     .rate-panel {
+      position: relative;      /* swap 버튼 absolute 용 */
       display: flex;
       align-items: center;
       padding: 12px;
@@ -44,6 +50,17 @@
     .amount {
       font-weight: 700;
       font-size: 18px;
+    }
+    /* 스왑 버튼 */
+    .swap {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #555;
     }
     .stamp {
       text-align: center;
@@ -68,8 +85,7 @@
       background: #f44336; color: #fff;
     }
     .keypad button[data-action="back"],
-    .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"] {
+    .keypad button[data-action="decimal"] {
       background: #ccc;
     }
     .keypad button[data-action="divide"],
@@ -87,44 +103,45 @@
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
+
+    <!-- 1st panel: 스왑 버튼 추가 -->
     <div class="rate-panel">
       <span id="flag1" class="flag">🇺🇸</span>
       <span id="code1" class="code">USD</span>
       <span id="value1" class="amount">0</span>
+      <button id="swapBtn" class="swap">🔄</button>
     </div>
+
+    <!-- 2nd panel -->
     <div class="rate-panel">
       <span id="flag2" class="flag">🇰🇷</span>
       <span id="code2" class="code">KRW</span>
       <span id="value2" class="amount">0</span>
     </div>
+
     <div id="rateTime" class="stamp">조회 시간: --</div>
 
     <div class="keypad" id="keypad">
-      <!-- 1행: C, ←, 🔄, ÷ -->
+      <!-- 스왑 버튼은 위로 이동했으므로 여기서는 제외 -->
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
-      <button data-action="swap">🔄</button>
       <button data-action="divide">÷</button>
 
-      <!-- 2행: 7,8,9,× -->
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="multiply">×</button>
 
-      <!-- 3행: 4,5,6,− -->
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="minus">−</button>
 
-      <!-- 4행: 1,2,3,＋ -->
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-action="plus">＋</button>
 
-      <!-- 5행: 0, ＝(두 칸), .(소수점) -->
       <button data-key="0">0</button>
       <button data-action="equal">＝</button>
       <button data-action="decimal">.</button>
@@ -133,14 +150,15 @@
 
   <script>
   (function(){
-    const code1    = document.getElementById('code1'),
-          code2    = document.getElementById('code2'),
-          flag1    = document.getElementById('flag1'),
+    const flag1    = document.getElementById('flag1'),
           flag2    = document.getElementById('flag2'),
+          code1    = document.getElementById('code1'),
+          code2    = document.getElementById('code2'),
           value1   = document.getElementById('value1'),
           value2   = document.getElementById('value2'),
           rateTime = document.getElementById('rateTime'),
-          keypad   = document.getElementById('keypad');
+          keypad   = document.getElementById('keypad'),
+          swapBtn  = document.getElementById('swapBtn');
 
     let inputStr = '';
 
@@ -190,20 +208,18 @@
 
       if (act === 'clear') {
         inputStr = ''; updateDisplay();
-        value2.innerText = '0'; rateTime.innerText = '조회 시간: --';
+        value2.innerText = '0';
+        rateTime.innerText = '조회 시간: --';
       }
       else if (act === 'back') {
         inputStr = inputStr.slice(0,-1); updateDisplay();
       }
-      else if (act === 'swap') {
-        swapPanels();
+      else if (['divide','multiply','minus','plus'].includes(act)) {
+        inputStr += e.target.textContent; updateDisplay();
       }
       else if (act === 'decimal') {
         if (!inputStr.includes('.')) inputStr += '.';
         updateDisplay();
-      }
-      else if (['divide','multiply','minus','plus'].includes(act)) {
-        inputStr += e.target.textContent; updateDisplay();
       }
       else if (act === 'equal') {
         fetchAndConvert();
@@ -212,6 +228,8 @@
         inputStr += key; updateDisplay();
       }
     });
+
+    swapBtn.addEventListener('click', swapPanels);
 
     updateDisplay();
   })();
