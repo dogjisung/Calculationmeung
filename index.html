@@ -1,106 +1,88 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산멍🐶</title>
   <style>
-    /* 페이지 전체를 100% 높이/너비로 잡고 스크롤 금지 */
+    /* 1) 페이지 전체 공백 제거, 스크롤 금지 */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100vw; height: 100vh;
       overflow: hidden;
-      background: #000; /* 검은 배경 */
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #f0f2f5;
+      display: flex; justify-content: center; align-items: center;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
-    /* 계산기 껍데기 */
+    /* 2) 컨테이너를 화면 전체에 꽉 채우기 */
     .container {
-      width: 100%;
+      width: 100%; height: 100%;
       max-width: 400px;
-      background: #202124;
-      border-radius: 0;
-      box-shadow: none;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column;
     }
-    /* 결과 패널 */
-    .rates {
-      display: flex;
-      flex-direction: column;
+    h1 {
+      text-align: center;
+      padding: 16px 0;
+      font-size: 24px;
     }
     .rate-panel {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      border-bottom: 1px solid #3c4043;
-      font-size: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px; background: #f7f7f7; border-bottom: 1px solid #ddd;
     }
+    .rate-panel span { font-size: 18px; }
     .rate-panel button {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 20px;
-      cursor: pointer;
+      background: none; border: none;
+      font-size: 20px; cursor: pointer;
     }
-    /* 키패드 */
     .keypad {
+      flex: 1;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-gap: 1px;
-      background: #3c4043;
+      grid-template-columns: repeat(4,1fr);
+      grid-gap: 8px;
+      padding: 8px;
+      background: #f0f2f5;
     }
     .keypad button {
-      padding: 24px 0;
-      font-size: 20px;
-      border: none;
-      background: #5f6368;
-      color: #fff;
-      cursor: pointer;
+      padding: 16px 0; font-size: 18px;
+      border: none; border-radius: 8px;
+      cursor: pointer; background: #e0e0e0;
     }
-    .keypad button[data-action="clear"] { background: #d93025; }
-    .keypad button[data-action="back"],
-    .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"] { background: #5f6368; }
-    .keypad button[data-action="divide"],
-    .keypad button[data-action="multiply"],
-    .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"] { background: #fbbc04; color:#000; }
-    .keypad button[data-action="equal"] {
-      background: #188038;
+    .keypad button[data-action=clear] { background: #f44336; color:#fff; }
+    .keypad button[data-action=back],
+    .keypad button[data-action=decimal],
+    .keypad button[data-action=swap] { background: #ccc; }
+    .keypad button[data-action=divide],
+    .keypad button[data-action=multiply],
+    .keypad button[data-action=minus],
+    .keypad button[data-action=plus] { background: #fbc02d; }
+    .keypad button[data-action=equal] {
+      background: #4caf50; color:#fff;
       grid-column: span 2;
     }
-    /* 소수점(.)을 + 아래로 */
-    button[data-action="decimal"] { grid-column: 4; grid-row: 5; }
-    /* 0 자리 넓히기, = 아래로 */
-    button[data-key="0"] { grid-column: 1 / span 2; }
-    button[data-action="equal"] { grid-row: 5; }
+    /* . 위치를 ＋ 아래로, 🔄 위치를 첫 번째 패널 오른쪽으로 */
+    button[data-action="decimal"] { grid-row: 5; grid-column: 4; }
+    button[data-action="swap"]    { grid-row: 1; grid-column: 3; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="rates">
-      <div class="rate-panel">
-        <span id="fromCode">USD</span>
-        <span id="fromVal">0</span>
-        <button data-action="swap">🔄</button>
-      </div>
-      <div class="rate-panel">
-        <span id="toCode">KRW</span>
-        <span id="toVal">0</span>
-      </div>
+    <h1>환율계산멍🐶</h1>
+    <div class="rate-panel">
+      <span id="code1">USD</span>
+      <span id="value1">0</span>
+      <button data-action="swap">🔄</button>
+    </div>
+    <div class="rate-panel">
+      <span id="code2">KRW</span>
+      <span id="value2">0</span>
     </div>
     <div class="keypad" id="pad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
-      <button data-action="swap">⇅</button>
+      <button data-action="swap">🔄</button>
       <button data-action="divide">÷</button>
 
       <button data-key="7">7</button>
@@ -126,65 +108,50 @@
 
   <script>
   (function(){
-    const fromCode = document.getElementById('fromCode'),
-          toCode   = document.getElementById('toCode'),
-          fromVal  = document.getElementById('fromVal'),
-          toVal    = document.getElementById('toVal'),
-          pad      = document.getElementById('pad');
-
+    const code1  = document.getElementById('code1'),
+          code2  = document.getElementById('code2'),
+          pad    = document.getElementById('pad'),
+          val1   = document.getElementById('value1'),
+          val2   = document.getElementById('value2');
     let expr = '';
 
-    function render() {
-      fromVal.innerText = expr || '0';
-    }
+    function render() { val1.innerText = expr||'0'; }
 
     async function convert() {
-      const amt = parseFloat(expr)||0;
+      const amt = parseFloat(expr)||0,
+            from=code1.innerText, to=code2.innerText;
       try {
-        const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCode.innerText}`);
-        if (!res.ok) throw new Error(res.status);
-        const json = await res.json();
-        const rate = json.rates[toCode.innerText];
-        if (typeof rate!=='number') throw new Error('환율 데이터 이상');
-        toVal.innerText = Math.round(amt * rate).toLocaleString();
+        const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${from}`);
+        if(!res.ok) throw new Error(res.status);
+        const j = await res.json(),
+              rate=j.rates[to];
+        if(typeof rate!=='number') throw new Error('환율 데이터 이상');
+        val2.innerText = Math.round(amt*rate).toLocaleString();
       } catch(e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류:'+e.message);
       }
     }
 
-    function swapPanels() {
-      [fromCode.innerText, toCode.innerText] = [toCode.innerText, fromCode.innerText];
-      [fromVal.innerText, toVal.innerText]   = [toVal.innerText, fromVal.innerText];
-      expr = '';
-      render();
+    function swap() {
+      [code1.innerText, code2.innerText] = [code2.innerText, code1.innerText];
+      [val1.innerText, val2.innerText]   = [val2.innerText, val1.innerText];
+      expr=''; render(); val2.innerText='0';
     }
 
     pad.addEventListener('click', e=>{
-      if (e.target.tagName!=='BUTTON') return;
-      const act = e.target.dataset.action,
-            key = e.target.dataset.key;
-      if (act==='clear') {
-        expr=''; toVal.innerText='0'; render();
-      }
-      else if (act==='back') {
-        expr=expr.slice(0,-1); render();
-      }
-      else if (act==='decimal') {
-        if (!expr.includes('.')) expr+='.'; render();
-      }
-      else if (['divide','multiply','minus','plus'].includes(act)) {
+      if(e.target.tagName!=='BUTTON') return;
+      const a=e.target.dataset.action, k=e.target.dataset.key;
+      if(a==='clear')     { expr=''; render(); val2.innerText='0'; }
+      else if(a==='back') { expr=expr.slice(0,-1); render(); }
+      else if(a==='decimal') { if(!expr.includes('.'))expr+='.'; render(); }
+      else if(['divide','multiply','minus','plus'].includes(a)) {
         expr+=e.target.textContent; render();
       }
-      else if (act==='equal') {
-        convert();
-      }
-      else if (act==='swap') {
-        swapPanels();
-      }
-      else if (key) {
-        expr+=key; render();
-      }
+      else if(a==='equal') convert();
+      else if(a==='swap')  swap();
+      else if(k)          { expr+=k; render(); }
     });
+
     render();
   })();
   </script>
