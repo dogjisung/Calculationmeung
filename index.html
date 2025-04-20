@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>환율계산멍🐶</title>
+  <title>환율계산</title>
   <style>
     body {
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
       background: #f0f2f5;
-      /* 앱 전체화면 기준으로 컨테이너가 꽉 차게 */
       height: 100dvh;
       overflow: hidden;
       display: flex;
@@ -21,7 +20,6 @@
       width: 100%;
       max-width: 360px;
       height: 100%;
-      padding: 0;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -35,19 +33,9 @@
       background: #f7f7f7;
       border-bottom: 1px solid #ddd;
     }
-    .flag {
-      font-size: 24px;
-      margin-right: 8px;
-    }
-    .code {
-      font-weight: 500;
-      color: #555;
-      flex: 1;
-    }
-    .amount {
-      font-weight: 700;
-      font-size: 18px;
-    }
+    .flag { font-size: 24px; margin-right: 8px; }
+    .code { flex: 1; font-weight: 500; color: #555; }
+    .amount { font-weight: 700; font-size: 18px; }
     .stamp {
       text-align: center;
       color: #888;
@@ -62,42 +50,33 @@
       padding: 8px;
     }
     .keypad button {
-      padding: 0;
-      height: 100%;
-      font-size: 18px;
+      background: #e0e0e0;
       border: none;
       border-radius: 8px;
+      font-size: 18px;
       cursor: pointer;
-      background: #e0e0e0;
     }
-    .keypad button[data-action="clear"] {
-      background: #f44336; color: #fff;
-    }
+    .keypad button[data-action="clear"] { background: #f44336; color: #fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"] {
-      background: #ccc;
-    }
+    .keypad button[data-action="swap"] { background: #ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"] {
-      background: #fbc02d;
-    }
+    .keypad button[data-action="plus"] { background: #fbc02d; }
     .keypad button[data-action="equal"] {
       background: #4caf50; color: #fff;
-      grid-column: span 2;
+      /* grid-column span 제거 */
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 제목을 제거했습니다 -->
+    <!-- 제목 제거했습니다 -->
     <div class="rate-panel">
       <span id="flag1" class="flag">🇺🇸</span>
       <span id="code1" class="code">USD</span>
       <span id="value1" class="amount">0</span>
-      <button data-action="swap" class="swap" style="display:none;"></button>
     </div>
     <div class="rate-panel">
       <span id="flag2" class="flag">🇰🇷</span>
@@ -105,6 +84,7 @@
       <span id="value2" class="amount">0</span>
     </div>
     <div id="rateTime" class="stamp">조회 시간: --</div>
+
     <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -127,8 +107,9 @@
       <button data-action="plus">＋</button>
 
       <button data-key="0">0</button>
-      <button data-action="equal">＝</button>
+      <!-- . 과 = 위치 교체 -->
       <button data-action="decimal">.</button>
+      <button data-action="equal">＝</button>
     </div>
   </div>
 
@@ -169,7 +150,8 @@
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
         value2.innerText   = Math.round(amt * rate).toLocaleString();
-        rateTime.innerText = '조회 시간: ' + new Date(json.date).toLocaleString();
+        // ★ 여기만 new Date()로 바꿔야 실제 호출 시간 표시됩니다
+        rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
       } catch(e) {
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
       }
