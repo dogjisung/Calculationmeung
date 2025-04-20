@@ -120,17 +120,30 @@
       v1.innerText = inputStr || '0';
     }
 
-    function fmtKR(won){
-      if (won < 10000) return String(won);
-      const man = Math.floor(won/10000),
-            rem = won%10000;
-      return rem === 0
-        ? `${man}만`
-        : `${man}만${rem}`;
+    // 한·영 대수 표기: 만(10^4), 억(10^8), 조(10^12), 경(10^16)
+    function fmtKR(num){
+      const units = ['', '만', '억', '조', '경'];
+      if (num < 10000) return String(num);
+      let s = String(num);
+      const pad = (4 - s.length%4)%4;
+      s = '0'.repeat(pad) + s;
+      const parts = [];
+      for(let i=0; i<s.length; i+=4){
+        parts.push(s.substr(i,4));
+      }
+      let res = '';
+      const N = parts.length;
+      parts.forEach((p,i)=>{
+        const n = parseInt(p,10);
+        if (n){
+          const u = units[N-1-i]||'';
+          res += n + u;
+        }
+      });
+      return res || '0';
     }
 
     async function fetchAndConvert(){
-      // 수식 변환
       const expr = inputStr
         .replace(/×/g,'*')
         .replace(/÷/g,'/')
@@ -150,7 +163,6 @@
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
         const conv = Math.round(amt * rate);
-        // KRW만 단위 포맷 적용
         v2.innerText = fmtKR(conv);
         rt.innerText = '조회 시간: ' + new Date(js.date).toLocaleString();
       } catch(e){
