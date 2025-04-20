@@ -7,55 +7,54 @@
   <style>
     html, body {
       margin: 0; padding: 0;
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-      background: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      width:100vw; height:100vh;
+      overflow:hidden;
+      background:#fff;
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
-      display: flex; flex-direction: column;
-      width: 100%; height: 100%;
-      max-width: 360px; margin: 0 auto;
+      display:flex; flex-direction:column;
+      width:100%; height:100%;
+      max-width:360px; margin:0 auto;
     }
     .top-section {
-      flex: 1; display: flex; flex-direction: column;
-      justify-content: center; border-bottom: 1px solid #ddd;
+      flex:1; display:flex; flex-direction:column;
+      justify-content:center; border-bottom:1px solid #ddd;
     }
     .rate-panel {
-      display: flex; align-items: center; padding: 16px;
+      display:flex; align-items:center; padding:16px;
     }
-    .flag { font-size: 32px; margin-right: 12px; }
-    .code { flex: 1; font-size: 20px; font-weight: 500; color: #555; }
-    .amount { font-size: 24px; font-weight: 700; }
+    .flag { font-size:32px; margin-right:12px; }
+    .code { flex:1; font-size:20px; font-weight:500; color:#555; }
+    .amount { font-size:24px; font-weight:700; }
     .stamp {
-      text-align: center; font-size: 14px;
-      color: #888; padding: 4px 0;
+      text-align:center; font-size:14px; color:#888;
+      padding:4px 0;
     }
     .keypad {
-      flex: 4;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 8px; padding: 12px; box-sizing: border-box;
+      flex:4;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-template-rows:repeat(5,1fr);
+      gap:8px; padding:12px; box-sizing:border-box;
     }
     .keypad button {
-      border: none; border-radius: 8px;
-      font-size: 20px; font-weight: 500;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      background: #e0e0e0;
+      border:none; border-radius:8px;
+      font-size:20px; font-weight:500; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      background:#e0e0e0;
     }
-    .keypad button[data-action="clear"]    { background: #f44336; color: #fff; }
+    .keypad button[data-action="clear"]    { background:#f44336; color:#fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="swap"],
-    .keypad button[data-action="decimal"] { background: #ccc; }
+    .keypad button[data-action="decimal"] { background:#ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"]     { background: #fbc02d; }
+    .keypad button[data-action="plus"]     { background:#fbc02d; }
     .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
-      grid-column: span 2; font-size: 22px;
+      background:#4caf50; color:#fff;
+      grid-column:span 2; font-size:22px;
     }
   </style>
 </head>
@@ -74,6 +73,7 @@
         <span id="value2" class="amount">0</span>
       </div>
       <div id="rateTime" class="stamp">조회 시간: --</div>
+      <div id="unitRate" class="stamp">1 KRW = -- USD</div>
     </div>
 
     <!-- 키패드 -->
@@ -113,6 +113,7 @@
           v1 = document.getElementById('value1'),
           v2 = document.getElementById('value2'),
           rt = document.getElementById('rateTime'),
+          ur = document.getElementById('unitRate'),
           kb = document.getElementById('keypad');
     let inputStr = '';
 
@@ -120,53 +121,49 @@
       v1.innerText = inputStr || '0';
     }
 
-    // 한·영 대수 표기: 만(10^4), 억(10^8), 조(10^12), 경(10^16)
+    // 만·억·조·경 표기
     function fmtKR(num){
-      const units = ['', '만', '억', '조', '경'];
-      if (num < 10000) return String(num);
-      let s = String(num);
-      const pad = (4 - s.length%4)%4;
-      s = '0'.repeat(pad) + s;
-      const parts = [];
-      for(let i=0; i<s.length; i+=4){
-        parts.push(s.substr(i,4));
-      }
-      let res = '';
-      const N = parts.length;
+      const units=['','만','억','조','경'];
+      if(num<10000) return ''+num;
+      let s = ''+num;
+      const pad=(4-s.length%4)%4;
+      s='0'.repeat(pad)+s;
+      const parts=[];
+      for(let i=0;i<s.length;i+=4) parts.push(s.substr(i,4));
+      let out='';
       parts.forEach((p,i)=>{
-        const n = parseInt(p,10);
-        if (n){
-          const u = units[N-1-i]||'';
-          res += n + u;
+        const n=parseInt(p,10);
+        if(n){
+          const u=units[parts.length-1-i]||'';
+          out+=n+u;
         }
       });
-      return res || '0';
+      return out||'0';
     }
 
     async function fetchAndConvert(){
       const expr = inputStr
-        .replace(/×/g,'*')
-        .replace(/÷/g,'/')
-        .replace(/−/g,'-')
-        .replace(/＋/g,'+');
-      let amt = 0;
-      try {
-        amt = Function('"use strict";return('+ (expr||'0') +')')();
-        if (isNaN(amt)) amt = 0;
-      } catch { amt = 0; }
+        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+      let amt=0;
+      try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
+      catch{ amt=0; }
+      if(isNaN(amt)) amt=0;
 
-      const from = c1.innerText, to = c2.innerText;
+      const from=c1.innerText, to=c2.innerText;
       try {
         const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
-        if (!res.ok) throw new Error(res.status);
+        if(!res.ok) throw new Error(res.status);
         const js = await res.json();
         const rate = js.rates[to];
-        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
+        if(typeof rate!=='number') throw new Error('환율 데이터 이상');
         const conv = Math.round(amt * rate);
         v2.innerText = fmtKR(conv);
-        rt.innerText = '조회 시간: ' + new Date(js.date).toLocaleString();
+        rt.innerText = '조회 시간: '+ new Date(js.date).toLocaleString();
+        // 단위당 환율: 1 to = 1/rate from
+        const inv = 1/rate;
+        ur.innerText = `1 ${to} = ${inv.toFixed(6)} ${from}`;
       } catch(e){
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+ e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류:'+ e.message);
       }
     }
 
@@ -176,34 +173,35 @@
       [v1.innerText,v2.innerText]=[v2.innerText,v1.innerText];
       inputStr=''; updateDisplay();
       rt.innerText='조회 시간: --';
+      ur.innerText='1 KRW = -- USD';
     }
 
-    kb.addEventListener('click', e=>{
-      if (e.target.tagName!=='BUTTON') return;
-      const a = e.target.dataset.action,
-            k = e.target.dataset.key;
-      if (a==='clear'){
+    kb.addEventListener('click',e=>{
+      if(e.target.tagName!=='BUTTON') return;
+      const a=e.target.dataset.action, k=e.target.dataset.key;
+      if(a==='clear'){
         inputStr=''; updateDisplay();
         v2.innerText='0'; rt.innerText='조회 시간: --';
+        ur.innerText='1 KRW = -- USD';
       }
-      else if (a==='back'){
-        inputStr = inputStr.slice(0,-1); updateDisplay();
+      else if(a==='back'){
+        inputStr=inputStr.slice(0,-1); updateDisplay();
       }
-      else if (['divide','multiply','minus','plus'].includes(a)){
-        inputStr += e.target.textContent; updateDisplay();
+      else if(['divide','multiply','minus','plus'].includes(a)){
+        inputStr+=e.target.textContent; updateDisplay();
       }
-      else if (a==='decimal'){
-        if (!inputStr.includes('.')) inputStr+='.';
+      else if(a==='decimal'){
+        if(!inputStr.includes('.')) inputStr+='.';
         updateDisplay();
       }
-      else if (a==='equal'){
+      else if(a==='equal'){
         fetchAndConvert();
       }
-      else if (a==='swap'){
+      else if(a==='swap'){
         swapPanels();
       }
-      else if (k){
-        inputStr += k; updateDisplay();
+      else if(k){
+        inputStr+=k; updateDisplay();
       }
     });
 
