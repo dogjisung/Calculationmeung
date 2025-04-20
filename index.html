@@ -83,6 +83,7 @@
 
   <script>
   (function(){
+    const PROXY_URL = 'https://broad-breeze-4af6.jane785714.workers.dev?url=';
     let inputStr = '';
     const f1 = document.getElementById('flag1'),
           f2 = document.getElementById('flag2'),
@@ -97,15 +98,19 @@
       v1.innerText = inputStr||'0';
     }
 
+    async function fetchViaProxy(url){
+      const res = await fetch(PROXY_URL + encodeURIComponent(url));
+      if(!res.ok) throw new Error(res.status);
+      return res.json();
+    }
+
     async function convertWithFallback(){
       const from = c1.innerText, to = c2.innerText;
       const amt  = inputStr ? Function(`"use strict";return(${inputStr})`)() : 0;
 
-      // 1) convert 시도
+      // 1) convert endpoint
       try {
-        const r1 = await fetch(`https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amt}`);
-        if(!r1.ok) throw new Error(r1.status);
-        const j1 = await r1.json();
+        const j1 = await fetchViaProxy(`https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amt}`);
         if(typeof j1.result==='number'){
           v2.innerText = Math.round(j1.result).toLocaleString();
           ts.innerText = '조회 시간: '+new Date().toLocaleString();
@@ -116,11 +121,9 @@
         console.warn('convert failed:', e);
       }
 
-      // 2) fallback to latest
+      // 2) latest endpoint
       try {
-        const r2 = await fetch(`https://api.exchangerate.host/latest?base=${from}&symbols=${to}`);
-        if(!r2.ok) throw new Error(r2.status);
-        const j2 = await r2.json();
+        const j2 = await fetchViaProxy(`https://api.exchangerate.host/latest?base=${from}&symbols=${to}`);
         const rate = j2.rates && j2.rates[to];
         if(typeof rate==='number'){
           v2.innerText = Math.round(amt*rate).toLocaleString();
