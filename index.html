@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산</title>
   <style>
-    /* 화면 전체 고정, 스크롤 제거 */
+    /* 전체 화면 꽉 채우고 스크롤 제거 */
     html, body {
       margin: 0; padding: 0;
       width: 100%; height: 100%;
@@ -17,14 +17,14 @@
     /* 컨테이너 */
     .container {
       width: 100%; max-width: 360px;
+      height: 100%;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      height: 100%;
     }
-    /* 상단 환율 표시부 */
+    /* 환율 패널 */
     .rate-panel {
       display: flex; align-items: center;
       padding: 12px 16px;
@@ -59,7 +59,6 @@
       background: #e0e0e0;
       display: flex; justify-content: center; align-items: center;
     }
-    /* 색상 분류 */
     .keypad button[data-action="clear"] { background: #f44336; color: #fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="decimal"],
@@ -68,15 +67,12 @@
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
     .keypad button[data-action="plus"] { background: #fbc02d; }
-    .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
-      grid-column: span 2;
-    }
+    .keypad button[data-action="equal"] { background: #4caf50; color: #fff; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 1) 상단: 환율 패널 -->
+    <!-- 상단: 환율 -->
     <div class="rate-panel">
       <span id="flag1" class="flag">🇺🇸</span>
       <span id="code1" class="code">USD</span>
@@ -90,12 +86,12 @@
     </div>
     <div id="rateTime" class="stamp">조회 시간: --</div>
 
-    <!-- 2) 키패드 -->
+    <!-- 키패드: 5행×4열 -->
     <div class="keypad" id="keypad">
       <!-- 1행 -->
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
-      <button data-action="decimal">.</button>
+      <button data-action="swap">🔄</button>
       <button data-action="divide">÷</button>
       <!-- 2행 -->
       <button data-key="7">7</button>
@@ -114,6 +110,9 @@
       <button data-action="plus">＋</button>
       <!-- 5행 -->
       <button data-key="0">0</button>
+      <button data-action="decimal">.</button>
+      <!-- 빈 칸 (자리 유지용) -->
+      <button disabled style="visibility:hidden"></button>
       <button data-action="equal">＝</button>
     </div>
   </div>
@@ -129,7 +128,6 @@
           rateTime = document.getElementById('rateTime'),
           keypad   = document.getElementById('keypad'),
           swapBtn  = document.getElementById('swapBtn');
-
     let inputStr = '';
 
     function updateDisplay() {
@@ -137,7 +135,7 @@
     }
 
     async function fetchAndConvert() {
-      // (1) 식 평가
+      // 1) 내부 연산
       let expr = inputStr
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
@@ -145,16 +143,15 @@
         .replace(/＋/g, '+');
       let amt = 0;
       try {
-        amt = Function('"use strict";return(' + (expr||'0') + ')')();
+        amt = Function('"use strict";return('+ (expr||'0') +')')();
         if (isNaN(amt)) amt = 0;
       } catch {
         amt = 0;
       }
-      // 결과 그대로 띄우기
       inputStr = amt.toString();
       updateDisplay();
 
-      // (2) 환율 조회
+      // 2) 환율 변환
       const from = code1.innerText, to = code2.innerText;
       try {
         const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
@@ -167,7 +164,7 @@
         value2.innerText   = conv.toLocaleString();
         rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
       } catch(e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
       }
     }
 
@@ -189,12 +186,10 @@
         rateTime.innerText = '조회 시간: --';
       }
       else if (act === 'back') {
-        inputStr = inputStr.slice(0, -1);
-        updateDisplay();
+        inputStr = inputStr.slice(0,-1); updateDisplay();
       }
       else if (['divide','multiply','minus','plus'].includes(act)) {
-        inputStr += e.target.textContent;
-        updateDisplay();
+        inputStr += e.target.textContent; updateDisplay();
       }
       else if (act === 'decimal') {
         if (!inputStr.includes('.')) inputStr += '.';
@@ -207,8 +202,7 @@
         swapPanels();
       }
       else if (key) {
-        inputStr += key;
-        updateDisplay();
+        inputStr += key; updateDisplay();
       }
     });
 
