@@ -15,80 +15,102 @@
       background: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
-    /* 컨테이너가 화면 전체 높이를 가득 채우도록 */
+    /* 컨테이너: 상단 표시부와 키패드를 세로로 분할 */
     .container {
+      display: flex;
+      flex-direction: column;
       width: 100%;
       height: 100%;
       max-width: 360px;
       margin: 0 auto;
+    }
+    /* 상단 환율 표시부: flex 1 */
+    .top-section {
+      flex: 1;
       display: flex;
       flex-direction: column;
+      justify-content: center;
+      border-bottom: 1px solid #ddd;
     }
-    /* 환율 패널 */
     .rate-panel {
       display: flex;
       align-items: center;
-      padding: 12px 16px;
-      border-bottom: 1px solid #ddd;
+      padding: 16px;
     }
-    .flag { font-size: 24px; margin-right: 8px; }
-    .code { flex: 1; font-weight: 500; color: #555; }
-    .amount { font-weight: 700; font-size: 18px; }
+    .flag {
+      font-size: 32px;
+      margin-right: 12px;
+    }
+    .code {
+      flex: 1;
+      font-size: 20px;
+      font-weight: 500;
+      color: #555;
+    }
+    .amount {
+      font-size: 24px;
+      font-weight: 700;
+    }
     .stamp {
       text-align: center;
+      font-size: 14px;
       color: #888;
-      font-size: 12px;
       padding: 4px 0;
     }
-    /* 키패드: 5행을 화면에 고르게 분할 */
+    /* 키패드: flex 4, 화면 남는 공간 모두 차지 */
     .keypad {
-      flex: 1;
+      flex: 4;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(5, 1fr);
       gap: 8px;
-      padding: 16px;
+      padding: 12px;
       box-sizing: border-box;
     }
     .keypad button {
       border: none;
       border-radius: 8px;
-      font-size: 18px;
+      font-size: 20px;
+      font-weight: 500;
       cursor: pointer;
-      background: #e0e0e0;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #e0e0e0;
     }
+    /* 색상별 버튼 스타일 */
     .keypad button[data-action="clear"]    { background: #f44336; color: #fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="swap"],
-    .keypad button[data-action="decimal"] { background: #ccc;             }
+    .keypad button[data-action="decimal"] { background: #ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"]     { background: #fbc02d;           }
+    .keypad button[data-action="plus"]     { background: #fbc02d; }
     .keypad button[data-action="equal"]    {
       background: #4caf50;
       color: #fff;
       grid-column: span 2;
+      font-size: 22px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 상단: 교환 버튼은 키패드로 옮겼으므로 제거 -->
-    <div class="rate-panel">
-      <span id="flag1" class="flag">🇺🇸</span>
-      <span id="code1" class="code">USD</span>
-      <span id="value1" class="amount">0</span>
+    <!-- 상단 표시부 -->
+    <div class="top-section">
+      <div class="rate-panel">
+        <span id="flag1" class="flag">🇺🇸</span>
+        <span id="code1" class="code">USD</span>
+        <span id="value1" class="amount">0</span>
+      </div>
+      <div class="rate-panel" style="border-top:1px solid #eee;">
+        <span id="flag2" class="flag">🇰🇷</span>
+        <span id="code2" class="code">KRW</span>
+        <span id="value2" class="amount">0</span>
+      </div>
+      <div id="rateTime" class="stamp">조회 시간: --</div>
     </div>
-    <div class="rate-panel">
-      <span id="flag2" class="flag">🇰🇷</span>
-      <span id="code2" class="code">KRW</span>
-      <span id="value2" class="amount">0</span>
-    </div>
-    <div id="rateTime" class="stamp">조회 시간: --</div>
 
     <!-- 키패드 -->
     <div class="keypad" id="keypad">
@@ -136,7 +158,7 @@
     }
 
     async function fetchAndConvert() {
-      // 사칙연산 기호를 JS 표현식으로 바꿔 계산
+      // 사용자 입력 수식에 사칙기호 맞춰서 계산
       const expr = inputStr
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
@@ -144,12 +166,13 @@
         .replace(/＋/g, '+');
       let amt = 0;
       try {
-        amt = Function('"use strict";return('+ (expr||'0') +')')();
+        amt = Function('"use strict";return(' + (expr||'0') + ')')();
         if (isNaN(amt)) amt = 0;
       } catch {
         amt = 0;
       }
-      // 환율 변환
+
+      // 환율 호출
       const from = code1.innerText, to = code2.innerText;
       try {
         const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
@@ -159,9 +182,9 @@
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
         const conv = Math.round(amt * rate);
         value2.innerText   = conv.toLocaleString();
-        rateTime.innerText = '조회 시간: '+new Date().toLocaleString();
+        rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
       } catch(e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
       }
     }
 
@@ -176,27 +199,27 @@
     keypad.addEventListener('click', e => {
       if (e.target.tagName !== 'BUTTON') return;
       const act = e.target.dataset.action, key = e.target.dataset.key;
-      if (act==='clear') {
-        inputStr=''; updateDisplay(); value2.innerText='0'; rateTime.innerText='조회 시간: --';
+      if (act === 'clear') {
+        inputStr = ''; updateDisplay(); value2.innerText='0'; rateTime.innerText='조회 시간: --';
       }
-      else if (act==='back') {
-        inputStr=inputStr.slice(0,-1); updateDisplay();
+      else if (act === 'back') {
+        inputStr = inputStr.slice(0,-1); updateDisplay();
       }
       else if (['divide','multiply','minus','plus'].includes(act)) {
-        inputStr+=e.target.textContent; updateDisplay();
+        inputStr += e.target.textContent; updateDisplay();
       }
-      else if (act==='decimal') {
-        if (!inputStr.includes('.')) inputStr+='.';
+      else if (act === 'decimal') {
+        if (!inputStr.includes('.')) inputStr += '.';
         updateDisplay();
       }
-      else if (act==='equal') {
+      else if (act === 'equal') {
         fetchAndConvert();
       }
-      else if (act==='swap') {
+      else if (act === 'swap') {
         swapPanels();
       }
       else if (key) {
-        inputStr+=key; updateDisplay();
+        inputStr += key; updateDisplay();
       }
     });
 
