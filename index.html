@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>환율계산멍🐶</title>
   <style>
-    /* --- (기존에 쓰시던 CSS를 여기에 붙여넣으세요) --- */
+    /* --- 베이스 레이아웃 --- */
     body {
       margin: 0;
       background: #f0f2f5;
@@ -17,34 +17,33 @@
       width: 100%; max-width: 360px;
       background: white; border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      padding: 20px;
+      padding: 20px; position: relative;
     }
-    h1 { text-align: center; margin: 0 0 16px; font-size: 24px; }
+    h1 {
+      text-align: center; font-size: 24px; margin: 0 0 16px;
+    }
     .rate-panel {
       position: relative;
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fafafa; border-radius: 12px;
+      display: flex; justify-content: space-between;
+      align-items: center;
       padding: 12px 16px; margin-bottom: 12px;
+      background: #fafafa; border-radius: 12px;
       box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
     }
+    .rate-panel span { font-size: 16px; color: #555; }
     .rate-panel .flag { font-size: 28px; margin-right: 8px; }
-    .rate-panel .code { font-size: 16px; color: #555; margin-right: auto; }
     .rate-panel .amount { font-size: 20px; font-weight: bold; color: #222; }
-    /* 스왑 버튼 */
-    .swap-btn {
-      position: absolute;
-      right: 10px; top: 50%;
-      transform: translateY(-50%);
-      border: none; background: none; cursor: pointer;
-      font-size: 18px; color: #777;
+    /* swap 버튼 */
+    .btn-swap {
+      position: absolute; top: 12px; right: 12px;
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: #888;
     }
-    .swap-btn:hover { color: #333; }
-
     .stamp {
       text-align: center; font-size: 12px; color: #888;
       margin-bottom: 12px;
     }
-
+    /* 키패드 */
     .keypad {
       display: grid;
       grid-template-columns: repeat(4,1fr);
@@ -57,105 +56,141 @@
     }
     .keypad button[data-action="clear"] { background: #e74c3c; color: white; }
     .keypad button[data-action="back"]  { background: #ddd; }
-    .keypad button[data-action="swap"]  { background: #ddd; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"] {
-      background: #f1c40f; color: white;
-    }
+    .keypad button[data-action="plus"] { background: #f1c40f; color: white; }
     .keypad button[data-action="equal"] {
-      background: #2ecc71; color: white;
-      grid-column: span 2;
+      background: #2ecc71; color: white; grid-column: span 2;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>환율계산멍🐶</h1>
-
-    <!-- 1st 통화 -->
     <div class="rate-panel">
-      <span id="flag1" class="flag">🇺🇸</span>
-      <span id="code1" class="code">USD</span>
-      <span id="amt1"  class="amount">0</span>
-      <button id="swap" class="swap-btn">⟳</button>
+      <span class="flag" id="flag1">🇺🇸</span>
+      <span class="code" id="code1">USD</span>
+      <span class="amount" id="value1">0</span>
+      <button class="btn-swap" id="swapBtn">⟳</button>
     </div>
-    <!-- 2nd 통화 -->
     <div class="rate-panel">
-      <span id="flag2" class="flag">🇰🇷</span>
-      <span id="code2" class="code">KRW</span>
-      <span id="amt2"  class="amount">0</span>
+      <span class="flag" id="flag2">🇰🇷</span>
+      <span class="code" id="code2">KRW</span>
+      <span class="amount" id="value2">0</span>
     </div>
-
-    <div id="rateTime" class="stamp">조회 시간: --</div>
-
+    <div class="stamp" id="rateTime">조회 시간: --</div>
     <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
-      <button data-action="swap">⟳</button>
+      <button data-action="decimal">.</button>
       <button data-action="divide">÷</button>
 
+      <!-- 숫자 7 8 9 × -->
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="multiply">×</button>
 
+      <!-- 숫자 4 5 6 − -->
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="minus">−</button>
 
+      <!-- 숫자 1 2 3 ＋ -->
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-action="plus">＋</button>
 
+      <!-- 숫자 0 = -->
       <button data-key="0">0</button>
-      <button data-action="decimal">.</button>
       <button data-action="equal">＝</button>
     </div>
   </div>
 
-  <!-- 이하 생략… -->
-<script>
-(function(){
-  // … 기존 변수, updateInput(), 이벤트 핸들러 등은 그대로 둡니다.
+  <script>
+  (function(){
+    const CONVERT_API = 'https://api.exchangerate.host/convert';
+    let inputStr = '';
 
-  async function fetchAndConvert() {
-    try {
-      // 1) 입력된 수식을 숫자로 계산
+    const code1 = document.getElementById('code1');
+    const code2 = document.getElementById('code2');
+    const flag1 = document.getElementById('flag1');
+    const flag2 = document.getElementById('flag2');
+    const val1  = document.getElementById('value1');
+    const val2  = document.getElementById('value2');
+    const rateTime = document.getElementById('rateTime');
+
+    function updateInputDisplay() {
+      val1.innerText = inputStr || '0';
+    }
+
+    async function fetchAndConvert() {
+      // eval 로 수식 계산 → 숫자
       let amount = 0;
       try {
-        amount = parseFloat(eval(input)) || 0;
+        amount = parseFloat(eval(inputStr)) || 0;
       } catch {
         amount = 0;
       }
 
-      // 2) convert 엔드포인트로 계산된 숫자(amount) 전달
-      const url = `https://api.exchangerate.host/convert?from=${base}&to=${target}&amount=${amount}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(res.status);
+      const fromCur = code1.innerText;
+      const toCur   = code2.innerText;
 
-      const json = await res.json();
-      if (typeof json.result !== 'number') throw new Error('환율 데이터 이상');
-
-      // 3) 받아온 결과 보여주기
-      amt2.innerText = Math.round(json.result).toLocaleString();
-      rateTime.innerText = '조회 시간: ' +
-        (json.date
-          ? new Date(json.date).toLocaleString()
-          : new Date().toLocaleString()
+      try {
+        const res = await fetch(
+          `${CONVERT_API}?from=${fromCur}&to=${toCur}&amount=${amount}`
         );
-    } catch (e) {
-      alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+        if (!res.ok) throw new Error(res.status);
+        const json = await res.json();
+        if (typeof json.result !== 'number') throw new Error('환율 데이터 이상');
+
+        // 결과 표시
+        val2.innerText = Math.round(json.result).toLocaleString();
+        const dateStr = json.date || new Date().toISOString();
+        rateTime.innerText = '조회 시간: ' +
+          new Date(dateStr).toLocaleString();
+      } catch (e) {
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+      }
     }
-  }
 
-  // … 나머지 keypad 이벤트, updateInput() 호출 등은 그대로
-})();
-</script>
+    // Swap 버튼
+    document.getElementById('swapBtn').addEventListener('click', ()=>{
+      // 코드랑 국기 교환
+      [code1.innerText, code2.innerText] = [code2.innerText, code1.innerText];
+      [flag1.innerText, flag2.innerText] = [flag2.innerText, flag1.innerText];
+      // 초기화
+      inputStr = '';
+      val1.innerText = '0';
+      val2.innerText = '0';
+      rateTime.innerText = '조회 시간: --';
+    });
 
+    // 키패드 클릭
+    document.querySelector('.keypad').addEventListener('click', e=>{
+      if (e.target.tagName!=='BUTTON') return;
+      const act = e.target.dataset.action;
+      const k   = e.target.dataset.key;
+
+      if (act==='clear') { inputStr=''; updateInputDisplay(); return; }
+      if (act==='back')  { inputStr=inputStr.slice(0,-1); updateInputDisplay(); return; }
+      if (act==='decimal'){ if (!inputStr.includes('.')) inputStr+='.'; updateInputDisplay(); return; }
+      if (/^(divide|multiply|minus|plus)$/.test(act)) {
+        inputStr += e.target.textContent;
+        updateInputDisplay(); return;
+      }
+      if (k) {
+        inputStr += k;
+        updateInputDisplay(); return;
+      }
+      if (act==='equal') {
+        fetchAndConvert();
+      }
+    });
+  })();
+  </script>
 </body>
 </html>
-
