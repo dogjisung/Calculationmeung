@@ -6,50 +6,29 @@
   <title>환율계산멍🐶</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
       background: #f0f2f5;
     }
     .container {
       max-width: 360px;
-      margin: 40px auto;
-      padding: 24px;
+      margin: 40px auto; padding: 24px;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    h1 {
-      text-align: center;
-      margin: 0 0 16px;
-      font-size: 24px;
-    }
+    h1 { text-align: center; margin: 0 0 16px; font-size: 24px; }
     .rate-panel {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      background: #f7f7f7;
-      border-radius: 8px;
-      margin-bottom: 8px;
+      display: flex; align-items: center;
+      padding: 12px; background: #f7f7f7;
+      border-radius: 8px; margin-bottom: 8px;
     }
-    .flag {
-      font-size: 24px;
-      margin-right: 8px;
-    }
-    .code {
-      font-weight: 500;
-      color: #555;
-      flex: 1;
-    }
-    .amount {
-      font-weight: 700;
-      font-size: 18px;
-    }
+    .flag { font-size: 24px; margin-right: 8px; }
+    .code { font-weight: 500; color: #555; flex: 1; }
+    .amount { font-weight: 700; font-size: 18px; }
     .stamp {
-      text-align: center;
-      color: #888;
-      font-size: 12px;
-      margin: 8px 0 16px;
+      text-align: center; color: #888;
+      font-size: 12px; margin: 8px 0 16px;
     }
     .keypad {
       display: grid;
@@ -57,12 +36,9 @@
       grid-gap: 8px;
     }
     .keypad button {
-      padding: 16px 0;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #e0e0e0;
+      padding: 16px 0; font-size: 18px;
+      border: none; border-radius: 8px;
+      cursor: pointer; background: #e0e0e0;
     }
     .keypad button[data-action="clear"] {
       background: #f44336; color: #fff;
@@ -70,13 +46,12 @@
     .keypad button[data-action="back"] {
       background: #ccc;
     }
+    .keypad button[data-action="swap"],
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"],
-    .keypad button[data-action="swap"] {
-      background: #fbc02d;
-      color: #fff;
+    .keypad button[data-action="plus"] {
+      background: #fbc02d; color: #fff;
     }
     .keypad button[data-action="decimal"] {
       background: #ccc;
@@ -102,31 +77,26 @@
     </div>
     <div id="rateTime" class="stamp">조회 시간: --</div>
     <div class="keypad">
-      <!-- 1행: C, ←, 스왑, ÷ -->
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button data-action="swap">🔄</button>
       <button data-action="divide">÷</button>
 
-      <!-- 2행: 7,8,9,× -->
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="multiply">×</button>
 
-      <!-- 3행: 4,5,6,− -->
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="minus">−</button>
 
-      <!-- 4행: 1,2,3,＋ -->
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-action="plus">＋</button>
 
-      <!-- 5행: 0, ＝(2칸), . -->
       <button data-key="0">0</button>
       <button data-action="equal">＝</button>
       <button data-action="decimal">.</button>
@@ -135,93 +105,83 @@
 
   <script>
   (function(){
-    const PROXY    = 'https://broad-breeze-4af6.jane785714.workers.dev?url=';
-    let inputStr   = '';
+    let inputStr = '';
 
-    const code1    = document.getElementById('code1'),
-          code2    = document.getElementById('code2'),
-          value1   = document.getElementById('value1'),
-          value2   = document.getElementById('value2'),
-          rateTime = document.getElementById('rateTime'),
-          keypad   = document.querySelector('.keypad');
+    const f1 = document.getElementById('flag1'),
+          f2 = document.getElementById('flag2'),
+          c1 = document.getElementById('code1'),
+          c2 = document.getElementById('code2'),
+          v1 = document.getElementById('value1'),
+          v2 = document.getElementById('value2'),
+          timeStamp = document.getElementById('rateTime'),
+          pad = document.querySelector('.keypad');
 
-    function updateDisplay() {
-      value1.innerText = inputStr || '0';
+    function updateMain() {
+      v1.innerText = inputStr || '0';
     }
 
-    async function fetchAndConvert() {
+    async function fetchConvert(){
       try {
-        const fromCur = code1.innerText;
-        const toCur   = code2.innerText;
-        const API_URL = `https://api.exchangerate.host/latest?base=${fromCur}&symbols=${toCur}`;
-        const url     = PROXY + encodeURIComponent(API_URL + '&_=' + Date.now());
-
-        const res  = await fetch(url);
+        const from = c1.innerText;
+        const to   = c2.innerText;
+        const res  = await fetch(`https://api.exchangerate.host/latest?base=${from}&symbols=${to}`);
         if (!res.ok) throw new Error(res.status);
-        const json = await res.json();
-        const rate = json.rates[toCur];
-        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
-
-        const amt    = Function('"use strict";return('+ (inputStr||'0') +')')();
-        const result = Math.round(amt * rate);
-
-        value2.innerText   = result.toLocaleString();
-        rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
+        const js  = await res.json();
+        const rt  = js.rates[to];
+        if (typeof rt!=='number') throw new Error('환율 데이터 이상');
+        const val = inputStr ? Function(`"use strict";return(${inputStr})`)() : 0;
+        v2.innerText = Math.round(val * rt).toLocaleString();
+        timeStamp.innerText = '조회 시간: ' + new Date().toLocaleString();
       } catch(e) {
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
       }
     }
 
-    function swapPanels() {
-      const f1 = document.getElementById('flag1'),
-            f2 = document.getElementById('flag2'),
-            v1 = value1, v2 = value2;
-
-      [f1.innerText, f2.innerText]     = [f2.innerText, f1.innerText];
-      [code1.innerText, code2.innerText] = [code2.innerText, code1.innerText];
-      [v1.innerText, v2.innerText]     = [v2.innerText, v1.innerText];
-
+    function swapPanels(){
+      [f1.innerText, f2.innerText] = [f2.innerText, f1.innerText];
+      [c1.innerText, c2.innerText] = [c2.innerText, c1.innerText];
+      [v1.innerText, v2.innerText] = [v2.innerText, v1.innerText];
       inputStr = '';
-      updateDisplay();
-      rateTime.innerText = '조회 시간: --';
+      updateMain();
+      v2.innerText = '0';
+      timeStamp.innerText = '조회 시간: --';
     }
 
-    keypad.addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      const a = e.target.dataset.action,
-            k = e.target.dataset.key;
+    pad.addEventListener('click', e=>{
+      if (e.target.tagName!=='BUTTON') return;
+      const act = e.target.dataset.action, key = e.target.dataset.key;
 
-      if (a === 'clear') {
-        inputStr = '';
-        updateDisplay();
-        value2.innerText = '0';
-        rateTime.innerText = '조회 시간: --';
+      if (act==='clear') {
+        inputStr='';
+        updateMain();
+        v2.innerText='0';
+        timeStamp.innerText='조회 시간: --';
       }
-      else if (a === 'back') {
-        inputStr = inputStr.slice(0, -1);
-        updateDisplay();
+      else if (act==='back') {
+        inputStr=inputStr.slice(0,-1);
+        updateMain();
       }
-      else if (a === 'swap') {
+      else if (act==='swap') {
         swapPanels();
       }
-      else if (/^(divide|multiply|minus|plus)$/.test(a)) {
+      else if (/^(divide|multiply|minus|plus)$/.test(act)) {
         inputStr += e.target.textContent;
-        updateDisplay();
+        updateMain();
       }
-      else if (a === 'decimal') {
-        if (!inputStr.includes('.')) inputStr += '.';
-        updateDisplay();
+      else if (act==='decimal') {
+        if (!inputStr.includes('.')) inputStr+='.';
+        updateMain();
       }
-      else if (a === 'equal') {
-        fetchAndConvert();
+      else if (act==='equal') {
+        fetchConvert();
       }
-      else if (k) {
-        inputStr += k;
-        updateDisplay();
+      else if (key) {
+        inputStr+=key;
+        updateMain();
       }
     });
 
-    updateDisplay();
+    updateMain();
   })();
   </script>
 </body>
