@@ -1,94 +1,75 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>환율계산</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100vh;
-      overflow: hidden;
-      background: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      margin:0; padding:0;
+      width:100%; height:100%;
+      overflow:hidden;
+      background:#f0f2f5;
+      display:flex; justify-content:center; align-items:center;
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
-      width: 100%;
-      max-width: 360px;
-      height: 100%;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
+      width:100%; max-width:360px;
+      height:100%;
+      background:#fff;
+      border-radius:16px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.1);
+      display:flex; flex-direction:column;
     }
     .rate-panel {
-      display: flex;
-      align-items: center;
-      padding: 16px;
-      background: #f7f7f7;
-      border-bottom: 1px solid #ddd;
+      display:flex; align-items:center;
+      padding:16px;
+      background:#f7f7f7;
+      border-bottom:1px solid #ddd;
     }
-    .flag { font-size: 24px; margin-right: 8px; }
-    .code { flex: 1; font-weight: 500; color: #555; }
-    .amount { font-weight: 700; font-size: 18px; }
+    .flag { font-size:24px; margin-right:8px; }
+    .code { flex:1; font-weight:500; color:#555; }
+    .amount { font-weight:700; font-size:18px; }
+    .swap-btn {
+      background:none; border:none;
+      font-size:20px; cursor:pointer;
+    }
     .stamp {
-      text-align: center;
-      color: #888;
-      font-size: 12px;
-      padding: 8px 0;
+      text-align:center;
+      color:#888; font-size:12px;
+      padding:8px 0;
     }
     .keypad {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-auto-rows: 64px;
-      gap: 8px;
-      padding: 16px;
+      flex:1;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-auto-rows:64px;
+      gap:8px;
+      padding:16px;
     }
     .keypad button {
-      border: none;
-      border-radius: 8px;
-      font-size: 18px;
-      cursor: pointer;
-      background: #e0e0e0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      border:none; border-radius:8px;
+      font-size:18px; cursor:pointer;
+      background:#e0e0e0;
+      display:flex; justify-content:center; align-items:center;
     }
-    .keypad button[data-action="clear"] {
-      background: #f44336; color: #fff;
-    }
+    .keypad button[data-action="clear"] { background:#f44336; color:#fff; }
     .keypad button[data-action="back"],
-    .keypad button[data-action="decimal"] {
-      background: #ccc;
-    }
+    .keypad button[data-action="decimal"],
+    .keypad button[data-action="swap"] { background:#ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"] {
-      background: #fbc02d;
-    }
+    .keypad button[data-action="plus"] { background:#fbc02d; }
     .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
+      background:#4caf50; color:#fff;
       grid-column: span 2;
-    }
-    .swap-btn {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      margin-left: 8px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 상단 환율 표시 -->
+    <!-- 상단 -->
     <div class="rate-panel">
       <span id="flag1" class="flag">🇺🇸</span>
       <span id="code1" class="code">USD</span>
@@ -102,29 +83,29 @@
     </div>
     <div id="rateTime" class="stamp">조회 시간: --</div>
 
-    <!-- 버튼패드 -->
+    <!-- 키패드 -->
     <div class="keypad" id="keypad">
-      <!-- 1행 -->
+      <!-- 1행: C, ←, ., ÷ -->
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button data-action="decimal">.</button>
       <button data-action="divide">÷</button>
-      <!-- 2행 -->
+      <!-- 2행: 7,8,9,× -->
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="multiply">×</button>
-      <!-- 3행 -->
+      <!-- 3행: 4,5,6,− -->
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="minus">−</button>
-      <!-- 4행 -->
+      <!-- 4행: 1,2,3,＋ -->
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-action="plus">＋</button>
-      <!-- 5행: 0, =(두 칸), . -->
+      <!-- 5행: 0, ＝(두 칸) -->
       <button data-key="0">0</button>
       <button data-action="equal">＝</button>
     </div>
@@ -149,33 +130,32 @@
       }
 
       async function fetchAndConvert() {
-        // 1) 계산 수행
+        // 1) 내부 계산
         let amt = 0;
         try {
-          amt = Function('"use strict";return(' + (inputStr||'0') + ')')();
+          amt = Function('"use strict";return('+ (inputStr||'0') +')')();
           if (isNaN(amt)) amt = 0;
         } catch {
           amt = 0;
         }
-        // 계산 결과 즉시 표시
+        // 계산 결과 곧바로 표시
         inputStr = amt.toString();
         updateDisplay();
 
-        // 2) 환율 API 호출
-        const from = code1.innerText,
-              to   = code2.innerText;
+        // 2) 환율 조회
+        const from = code1.innerText, to = code2.innerText;
         try {
           const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
           if (!res.ok) throw new Error(res.status);
           const json = await res.json();
           const rate = json.rates[to];
-          if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
+          if (typeof rate!=='number') throw new Error('환율 데이터 이상');
 
-          const converted = Math.round(amt * rate);
-          value2.innerText   = converted.toLocaleString();
+          const conv = Math.round(amt * rate);
+          value2.innerText   = conv.toLocaleString();
           rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
-        } catch (e) {
-          alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
+        } catch(e) {
+          alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
         }
       }
 
@@ -183,46 +163,35 @@
         [flag1.innerText, flag2.innerText]   = [flag2.innerText, flag1.innerText];
         [code1.innerText, code2.innerText]   = [code2.innerText, code1.innerText];
         [value1.innerText, value2.innerText] = [value2.innerText, value1.innerText];
-        inputStr = '';
-        updateDisplay();
-        rateTime.innerText = '조회 시간: --';
+        inputStr=''; updateDisplay();
+        rateTime.innerText='조회 시간: --';
       }
 
-      keypad.addEventListener('click', e => {
-        if (e.target.tagName !== 'BUTTON') return;
-        const act = e.target.dataset.action,
-              key = e.target.dataset.key;
-
-        if (act === 'clear') {
-          inputStr = '';
-          updateDisplay();
-          value2.innerText      = '0';
-          rateTime.innerText    = '조회 시간: --';
+      keypad.addEventListener('click', e=>{
+        if (e.target.tagName!=='BUTTON') return;
+        const act = e.target.dataset.action, key = e.target.dataset.key;
+        if (act==='clear') {
+          inputStr=''; updateDisplay();
+          value2.innerText='0'; rateTime.innerText='조회 시간: --';
         }
-        else if (act === 'back') {
-          inputStr = inputStr.slice(0,-1);
-          updateDisplay();
+        else if (act==='back') {
+          inputStr=inputStr.slice(0,-1); updateDisplay();
         }
         else if (['divide','multiply','minus','plus'].includes(act)) {
-          inputStr += e.target.textContent;
-          updateDisplay();
+          inputStr += e.target.textContent; updateDisplay();
         }
-        else if (act === 'decimal') {
-          if (!inputStr.includes('.')) inputStr += '.';
-          updateDisplay();
+        else if (act==='decimal') {
+          if (!inputStr.includes('.')) inputStr += '.'; updateDisplay();
         }
-        else if (act === 'equal') {
+        else if (act==='equal') {
           fetchAndConvert();
         }
         else if (key) {
-          inputStr += key;
-          updateDisplay();
+          inputStr += key; updateDisplay();
         }
       });
 
       swapBtn.addEventListener('click', swapPanels);
-
-      // 초기
       updateDisplay();
     })();
   </script>
