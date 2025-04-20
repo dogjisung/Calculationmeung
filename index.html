@@ -100,7 +100,7 @@
       <span id="flag1" class="flag">🇺🇸</span>
       <span id="code1" class="code">USD</span>
       <span id="value1" class="amount">0</span>
-      <button id="swapBtn" class="swap" data-action="swap">🔄</button>
+      <button id="swapBtn" class="swap">🔄</button>
     </div>
     <div class="rate-panel">
       <span id="flag2" class="flag">🇰🇷</span>
@@ -108,7 +108,7 @@
       <span id="value2" class="amount">0</span>
     </div>
     <div id="rateTime" class="stamp">조회 시간: --</div>
-    <div class="keypad">
+    <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button data-action="decimal">.</button>
@@ -141,7 +141,7 @@
           value1   = document.getElementById('value1'),
           value2   = document.getElementById('value2'),
           rateTime = document.getElementById('rateTime'),
-          keypad   = document.querySelector('.keypad'),
+          keypad   = document.getElementById('keypad'),
           swapBtn  = document.getElementById('swapBtn');
 
     let inputStr = '';
@@ -151,9 +151,10 @@
     }
 
     async function fetchAndConvert() {
+      // 1) 숫자 계산
       let amt = 0;
       try {
-        amt = Function('"use strict";return('+ (inputStr||'0') +')')();
+        amt = Function('"use strict";return(' + (inputStr||'0') + ')')();
         if (isNaN(amt)) amt = 0;
       } catch {
         amt = 0;
@@ -163,9 +164,8 @@
       const toCur   = code2.innerText;
 
       try {
-        // exchangerate.host API 사용
-        const url = `https://api.exchangerate.host/latest?base=${fromCur}&symbols=${toCur}&_=${Date.now()}`;
-        const res = await fetch(url);
+        // exchangerate-api.com 사용
+        const res  = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCur}`);
         if (!res.ok) throw new Error(res.status);
         const json = await res.json();
 
@@ -174,7 +174,7 @@
 
         const converted = Math.round(amt * rate);
         value2.innerText   = converted.toLocaleString();
-        rateTime.innerText = '조회 시간: ' + new Date(json.date).toLocaleString();
+        rateTime.innerText = '조회 시간: ' + new Date().toLocaleString();
 
       } catch (e) {
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
@@ -200,36 +200,31 @@
       const action = e.target.dataset.action;
       const key    = e.target.dataset.key;
 
-      switch(action) {
-        case 'clear':
-          inputStr = '';
-          updateDisplay();
-          value2.innerText = '0';
-          rateTime.innerText = '조회 시간: --';
-          break;
-        case 'back':
-          inputStr = inputStr.slice(0,-1);
-          updateDisplay();
-          break;
-        case 'swap':
-          swapPanels();
-          break;
-        case 'divide': case 'multiply': case 'minus': case 'plus':
-          inputStr += e.target.textContent;
-          updateDisplay();
-          break;
-        case 'decimal':
-          if (!inputStr.includes('.')) inputStr += '.';
-          updateDisplay();
-          break;
-        case 'equal':
-          fetchAndConvert();
-          break;
-        default:
-          if (key) {
-            inputStr += key;
-            updateDisplay();
-          }
+      if (action === 'clear') {
+        inputStr = '';
+        updateDisplay();
+        value2.innerText   = '0';
+        rateTime.innerText = '조회 시간: --';
+      }
+      else if (action === 'back') {
+        inputStr = inputStr.slice(0,-1);
+        updateDisplay();
+      }
+      else if (action === 'decimal') {
+        if (!inputStr.includes('.')) inputStr += '.';
+        updateDisplay();
+      }
+      else if (action === 'divide' || action === 'multiply'
+            || action === 'minus'  || action === 'plus') {
+        inputStr += e.target.textContent;
+        updateDisplay();
+      }
+      else if (action === 'equal') {
+        fetchAndConvert();
+      }
+      else if (key) {
+        inputStr += key;
+        updateDisplay();
       }
     });
 
