@@ -84,33 +84,51 @@
   <script>
   (function(){
     let inputStr = '';
-
     const f1 = document.getElementById('flag1'),
           f2 = document.getElementById('flag2'),
           c1 = document.getElementById('code1'),
           c2 = document.getElementById('code2'),
           v1 = document.getElementById('value1'),
           v2 = document.getElementById('value2'),
-          timeStamp = document.getElementById('rateTime'),
+          ts = document.getElementById('rateTime'),
           pad = document.querySelector('.keypad');
 
-    function updateMain() {
-      v1.innerText = inputStr || '0';
+    function updateMain(){
+      v1.innerText = inputStr||'0';
     }
 
-    async function fetchConvert(){
+    async function convertWithFallback(){
+      const from = c1.innerText, to = c2.innerText;
+      const amt  = inputStr ? Function(`"use strict";return(${inputStr})`)() : 0;
+
+      // 1) convert 시도
       try {
-        const from   = c1.innerText;
-        const to     = c2.innerText;
-        const amount = inputStr ? Function(`"use strict";return(${inputStr})`)() : 0;
-        const url    = `https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amount}`;
-        const res    = await fetch(url);
-        if(!res.ok) throw new Error(res.status);
-        const js     = await res.json();
-        if (typeof js.result !== 'number') throw new Error('환율 데이터 이상');
-        v2.innerText = Math.round(js.result).toLocaleString();
-        timeStamp.innerText = '조회 시간: ' + new Date().toLocaleString();
+        const r1 = await fetch(`https://api.exchangerate.host/convert?from=${from}&to=${to}&amount=${amt}`);
+        if(!r1.ok) throw new Error(r1.status);
+        const j1 = await r1.json();
+        if(typeof j1.result==='number'){
+          v2.innerText = Math.round(j1.result).toLocaleString();
+          ts.innerText = '조회 시간: '+new Date().toLocaleString();
+          return;
+        }
+        throw new Error('no-result');
       } catch(e) {
+        console.warn('convert failed:', e);
+      }
+
+      // 2) fallback to latest
+      try {
+        const r2 = await fetch(`https://api.exchangerate.host/latest?base=${from}&symbols=${to}`);
+        if(!r2.ok) throw new Error(r2.status);
+        const j2 = await r2.json();
+        const rate = j2.rates && j2.rates[to];
+        if(typeof rate==='number'){
+          v2.innerText = Math.round(amt*rate).toLocaleString();
+          ts.innerText = '조회 시간: '+new Date().toLocaleString();
+          return;
+        }
+        throw new Error('bad-rate');
+      } catch(e){
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+ e.message);
       }
     }
@@ -119,35 +137,35 @@
       [f1.innerText, f2.innerText] = [f2.innerText, f1.innerText];
       [c1.innerText, c2.innerText] = [c2.innerText, c1.innerText];
       [v1.innerText, v2.innerText] = [v2.innerText, v1.innerText];
-      inputStr = ''; updateMain();
-      v2.innerText = '0'; timeStamp.innerText = '조회 시간: --';
+      inputStr=''; updateMain();
+      v2.innerText='0'; ts.innerText='조회 시간: --';
     }
 
     pad.addEventListener('click', e=>{
-      if (e.target.tagName!=='BUTTON') return;
-      const act = e.target.dataset.action, key = e.target.dataset.key;
+      if(e.target.tagName!=='BUTTON') return;
+      const a = e.target.dataset.action, k = e.target.dataset.key;
 
-      if (act==='clear') {
+      if(a==='clear'){
         inputStr=''; updateMain();
-        v2.innerText='0'; timeStamp.innerText='조회 시간: --';
+        v2.innerText='0'; ts.innerText='조회 시간: --';
       }
-      else if (act==='back') {
+      else if(a==='back'){
         inputStr=inputStr.slice(0,-1); updateMain();
       }
-      else if (act==='swap') {
+      else if(a==='swap'){
         swapPanels();
       }
-      else if (/^(divide|multiply|minus|plus)$/.test(act)) {
+      else if(/^(divide|multiply|minus|plus)$/.test(a)){
         inputStr+=e.target.textContent; updateMain();
       }
-      else if (act==='decimal') {
-        if (!inputStr.includes('.')) inputStr+='.'; updateMain();
+      else if(a==='decimal'){
+        if(!inputStr.includes('.')) inputStr+='.'; updateMain();
       }
-      else if (act==='equal') {
-        fetchConvert();
+      else if(a==='equal'){
+        convertWithFallback();
       }
-      else if (key) {
-        inputStr+=key; updateMain();
+      else if(k){
+        inputStr+=k; updateMain();
       }
     });
 
