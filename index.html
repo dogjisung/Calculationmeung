@@ -56,6 +56,10 @@
       background:#4caf50; color:#fff;
       grid-column:span 2; font-size:22px;
     }
+    .settings-btn {
+      position:absolute; bottom:16px; right:16px;
+      font-size:28px; text-decoration:none; color:#333;
+    }
   </style>
 </head>
 <body>
@@ -98,6 +102,8 @@
     </div>
   </div>
 
+  <a href="settings.html" class="settings-btn">⚙️</a>
+
   <script>
   (function(){
     const f1 = document.getElementById('flag1'),
@@ -111,6 +117,12 @@
           kb = document.getElementById('keypad');
 
     let inputStr = '';
+    // settings에서 골랐던 기본/대상 통화가 있으면 적용
+    const base = localStorage.getItem('baseCur') || 'USD';
+    const target = localStorage.getItem('targetCur') || 'KRW';
+    const flags = { USD:'🇺🇸', KRW:'🇰🇷', JPY:'🇯🇵', CNY:'🇨🇳', VND:'🇻🇳' };
+    f1.innerText = flags[base]; c1.innerText = base;
+    f2.innerText = flags[target]; c2.innerText = target;
 
     function updateDisplay(){
       v1.innerText = inputStr || '0';
@@ -132,20 +144,16 @@
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // 실제 요청 시각으로 표시
+        // 실시간 표시
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
 
         // 단위 환율
-        if (to === 'KRW') {
-          ur.innerText = `1 ${from} = ${Math.round(rate).toLocaleString()} ${to}`;
-        } else {
-          ur.innerText = `1 ${from} = ${rate.toFixed(6)} ${to}`;
-        }
+        ur.innerText = `1 ${from} = ${to==='KRW'? Math.round(rate): rate.toFixed(6)} ${to}`;
 
         // 금액 변환
         const result = amt * rate;
         if (to === 'KRW') {
-          // KRW는 한글 단위 표시(만/억/조...)
+          // KRW는 한글 단위 표시
           function fmtKR(num){
             const u=['','만','억','조','경'];
             if(num<10000) return ''+num;
@@ -159,52 +167,48 @@
           }
           v2.innerText = fmtKR(result);
         } else {
-          // USD는 소수점 6자리까지, 불필요 0 제거
           v2.innerText = result.toFixed(6).replace(/\.?0+$/,'');
         }
       } catch(e){
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류:'+ e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
       }
     }
 
     function swapPanels(){
       [f1.innerText,f2.innerText] = [f2.innerText,f1.innerText];
       [c1.innerText,c2.innerText] = [c2.innerText,c1.innerText];
-      [v1.innerText,v2.innerText] = [v2.innerText,v1.innerText];
-      inputStr='';
-      updateDisplay();
-      rt.innerText = '조회 시간: --';
-      ur.innerText = `1 ${c2.innerText} = -- ${c1.innerText}`;
+      localStorage.setItem('baseCur', c1.innerText);
+      localStorage.setItem('targetCur', c2.innerText);
+      inputStr=''; updateDisplay();
+      rt.innerText='조회 시간: --'; ur.innerText=`1 ${c1.innerText}=-- ${c2.innerText}`;
       fetchAndConvert();
     }
 
     kb.addEventListener('click', e => {
-      if (e.target.tagName !== 'BUTTON') return;
-      const a = e.target.dataset.action, k = e.target.dataset.key;
-      if (a === 'clear'){
+      if(e.target.tagName!=='BUTTON')return;
+      const a=e.target.dataset.action, k=e.target.dataset.key;
+      if(a==='clear'){
         inputStr=''; updateDisplay();
-        v2.innerText='0';
-        rt.innerText='조회 시간: --';
-        ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
+        v2.innerText='0'; rt.innerText='조회 시간: --';
+        ur.innerText=`1 ${c1.innerText}=-- ${c2.innerText}`;
       }
-      else if (a === 'back'){
-        inputStr = inputStr.slice(0,-1); updateDisplay();
+      else if(a==='back'){
+        inputStr=inputStr.slice(0,-1); updateDisplay();
       }
-      else if (['divide','multiply','minus','plus'].includes(a)){
-        inputStr += e.target.textContent; updateDisplay();
+      else if(['divide','multiply','minus','plus'].includes(a)){
+        inputStr+=e.target.textContent; updateDisplay();
       }
-      else if (a === 'decimal'){
-        if (!inputStr.includes('.')) inputStr += '.';
-        updateDisplay();
+      else if(a==='decimal'){
+        if(!inputStr.includes('.'))inputStr+='.'; updateDisplay();
       }
-      else if (a === 'swap'){
+      else if(a==='swap'){
         swapPanels();
       }
-      else if (a === 'equal'){
+      else if(a==='equal'){
         fetchAndConvert();
       }
-      else if (k){
-        inputStr += k; updateDisplay();
+      else if(k){
+        inputStr+=k; updateDisplay();
       }
     });
 
