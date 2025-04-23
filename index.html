@@ -16,10 +16,12 @@
       display:flex; flex-direction:column;
       width:100%; height:100%;
       max-width:360px; margin:0 auto;
+      position:relative;
     }
     .top {
       flex:1; display:flex; flex-direction:column;
       justify-content:center; border-bottom:1px solid #ddd;
+      padding-top:40px; /* 상단 아이콘 공간 확보 */
     }
     .rate-panel {
       display:flex; align-items:center; padding:16px;
@@ -56,14 +58,22 @@
       background:#4caf50; color:#fff;
       grid-column:span 2; font-size:22px;
     }
+
+    /* 톱니 버튼을 우상단에 고정 */
     .settings-btn {
-      position:absolute; bottom:16px; right:16px;
-      font-size:28px; text-decoration:none; color:#333;
+      position:absolute;
+      top:8px; right:8px;
+      font-size:28px;
+      text-decoration:none;
+      color:#555;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- 설정 이동 버튼 -->
+    <a href="settings.html" class="settings-btn">⚙️</a>
+
     <div class="top">
       <div class="rate-panel">
         <span id="flag1" class="flag">🇺🇸</span>
@@ -102,8 +112,6 @@
     </div>
   </div>
 
-  <a href="settings.html" class="settings-btn">⚙️</a>
-
   <script>
   (function(){
     const f1 = document.getElementById('flag1'),
@@ -117,18 +125,13 @@
           kb = document.getElementById('keypad');
 
     let inputStr = '';
-    // settings에서 골랐던 기본/대상 통화가 있으면 적용
-    const base = localStorage.getItem('baseCur') || 'USD';
-    const target = localStorage.getItem('targetCur') || 'KRW';
-    const flags = { USD:'🇺🇸', KRW:'🇰🇷', JPY:'🇯🇵', CNY:'🇨🇳', VND:'🇻🇳' };
-    f1.innerText = flags[base]; c1.innerText = base;
-    f2.innerText = flags[target]; c2.innerText = target;
 
     function updateDisplay(){
       v1.innerText = inputStr || '0';
     }
 
     async function fetchAndConvert(){
+      // 연산식 기호 교체
       const expr = inputStr
         .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
       let amt = 0;
@@ -144,30 +147,21 @@
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // 실시간 표시
+        // 조회 시간
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
 
         // 단위 환율
-        ur.innerText = `1 ${from} = ${to==='KRW'? Math.round(rate): rate.toFixed(6)} ${to}`;
+        ur.innerText = `1 ${from} = ${ to==='KRW'
+          ? Math.round(rate).toLocaleString()
+          : rate.toFixed(6)
+        } ${to}`;
 
-        // 금액 변환
+        // 금액 변환 — 항상 천 단위 콤마
         const result = amt * rate;
-        if (to === 'KRW') {
-          // KRW는 한글 단위 표시
-          function fmtKR(num){
-            const u=['','만','억','조','경'];
-            if(num<10000) return ''+num;
-            let s=(''+Math.round(num)).padStart(Math.ceil(num.toString().length/4)*4,'0');
-            const parts=[];
-            for(let i=0;i<s.length;i+=4) parts.push(s.substr(i,4));
-            return parts.map((p,i)=>{
-              const n=parseInt(p,10);
-              return n? n+u[parts.length-1-i]: '';
-            }).join('');
-          }
-          v2.innerText = fmtKR(result);
+        if (to==='KRW') {
+          v2.innerText = Math.round(result).toLocaleString();
         } else {
-          v2.innerText = result.toFixed(6).replace(/\.?0+$/,'');
+          v2.innerText = result.toFixed(6).replace(/\.?0+$/,'').toLocaleString();
         }
       } catch(e){
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: ' + e.message);
@@ -177,38 +171,38 @@
     function swapPanels(){
       [f1.innerText,f2.innerText] = [f2.innerText,f1.innerText];
       [c1.innerText,c2.innerText] = [c2.innerText,c1.innerText];
-      localStorage.setItem('baseCur', c1.innerText);
-      localStorage.setItem('targetCur', c2.innerText);
       inputStr=''; updateDisplay();
-      rt.innerText='조회 시간: --'; ur.innerText=`1 ${c1.innerText}=-- ${c2.innerText}`;
+      rt.innerText='조회 시간: --';
+      ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
       fetchAndConvert();
     }
 
     kb.addEventListener('click', e => {
-      if(e.target.tagName!=='BUTTON')return;
-      const a=e.target.dataset.action, k=e.target.dataset.key;
-      if(a==='clear'){
+      if (e.target.tagName!=='BUTTON') return;
+      const a = e.target.dataset.action, k = e.target.dataset.key;
+      if (a==='clear'){
         inputStr=''; updateDisplay();
         v2.innerText='0'; rt.innerText='조회 시간: --';
-        ur.innerText=`1 ${c1.innerText}=-- ${c2.innerText}`;
+        ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
       }
-      else if(a==='back'){
-        inputStr=inputStr.slice(0,-1); updateDisplay();
+      else if (a==='back'){
+        inputStr = inputStr.slice(0,-1); updateDisplay();
       }
-      else if(['divide','multiply','minus','plus'].includes(a)){
-        inputStr+=e.target.textContent; updateDisplay();
+      else if (['divide','multiply','minus','plus'].includes(a)){
+        inputStr += e.target.textContent; updateDisplay();
       }
-      else if(a==='decimal'){
-        if(!inputStr.includes('.'))inputStr+='.'; updateDisplay();
+      else if (a==='decimal'){
+        if (!inputStr.includes('.')) inputStr += '.';
+        updateDisplay();
       }
-      else if(a==='swap'){
+      else if (a==='swap'){
         swapPanels();
       }
-      else if(a==='equal'){
+      else if (a==='equal'){
         fetchAndConvert();
       }
-      else if(k){
-        inputStr+=k; updateDisplay();
+      else if (k){
+        inputStr += k; updateDisplay();
       }
     });
 
