@@ -5,107 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>환율계산</title>
   <style>
-    /* ——————————————————————————————————
-       공통 레이아웃
-    —————————————————————————————————— */
+    /* —————————————————————————————— */
+    /*  레이아웃 복구 & 테마 스타일       */
+    /* —————————————————————————————— */
     html, body {
-      margin: 0; padding: 0;
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-      background: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      margin:0; padding:0;
+      width:100vw; height:100vh;
+      overflow:hidden;
+      background:#fff; color:#000;
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
+    body.dark  { background:#222; color:#ddd; }
+    body.pink  { background:#ffe4e1; color:#333; }
+    body.mint  { background:#e0f7fa; color:#004d40; }
+
     .container {
-      width: 100%;
-      max-width: 360px;
-      height: 100%;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
+      width:100%; max-width:360px;
+      height:100%; margin:0 auto;
+      display:flex; flex-direction:column;
     }
     .top {
-      flex: 1;
-      padding: 16px 12px 0;
-      border-bottom: 1px solid #ddd;
-      position: relative;
-      box-sizing: border-box;
+      flex:1; padding:16px 12px 0;
+      border-bottom:1px solid #ddd;
+      position:relative; box-sizing:border-box;
     }
     .settings-btn {
-      position: absolute;
-      top: 16px; right: 12px;
-      width: 28px; height: 28px;
-      border: none; background: none;
-      font-size: 24px; cursor: pointer;
+      position:absolute; top:16px; right:12px;
+      width:28px; height:28px;
+      background:none; border:none;
+      font-size:24px; cursor:pointer;
     }
     .rate-panel {
-      display: flex; align-items: center;
-      padding: 12px 0;
-      border-top: 1px solid #eee;
+      display:flex; align-items:center;
+      padding:12px 0; border-top:1px solid #eee;
     }
-    .rate-panel:first-of-type { border-top: none; }
-    .flag   { font-size: 32px; margin-right: 12px; }
-    .code   { flex: 1; font-size: 20px; color: #444; }
-    .amount { font-size: 24px; font-weight: 700; color: #000; }
-    .stamp {
-      text-align: center;
-      font-size: 14px;
-      color: #888;
-      margin: 4px 0;
-    }
+    .rate-panel:first-of-type { border-top:none; }
+    .flag   { font-size:32px; margin-right:12px; }
+    .code   { flex:1; font-size:20px; }
+    .amount { font-size:24px; font-weight:700; }
+    .stamp  { text-align:center; font-size:14px; color:#888; margin:4px 0; }
 
     .keypad {
-      flex: 3;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 8px;
-      padding: 12px;
-      box-sizing: border-box;
+      flex:3;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-template-rows:repeat(5,1fr);
+      gap:8px; padding:12px; box-sizing:border-box;
     }
     .keypad button {
-      border: none; border-radius: 8px;
-      font-size: 20px; font-weight: 500;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      background: #e0e0e0;
-      color: #000;
+      border:none; border-radius:8px;
+      font-size:20px; font-weight:500;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; background:#e0e0e0; color:inherit;
     }
-    .keypad button[data-action="clear"]    { background: #f44336; color: #fff; }
-    .keypad button[data-action="back"],
-    .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"]     { background: #ccc; }
-    .keypad button[data-action="divide"],
-    .keypad button[data-action="multiply"],
-    .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"]     { background: #fbc02d; }
-    .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
-      grid-column: span 2;
-      font-size: 22px;
+    .keypad button.clear   { background:#f44336; color:#fff; }
+    .keypad button.back    { background:#ccc; }
+    .keypad button.swap    { background:#ccc; }
+    .keypad button.decimal { background:#ccc; }
+    .keypad button.op      { background:#fbc02d; }
+    .keypad button.equal {
+      background:#4caf50; color:#fff;
+      grid-column:span 2; font-size:22px;
     }
 
-    /* ——————————————————————————————————
-       테마
-    —————————————————————————————————— */
-    body.light { background: #fff; color: #000; }
-    body.dark  { background: #222; color: #ddd; }
-    body.pink  { background: #ffe4e1; color: #333; }
-    body.mint  { background: #e0f7fa; color: #004d40; }
-
-    /* 다크 모드 키패드 버튼 가독성 보강 */
-    body.dark .keypad button {
-      background: #444 !important;
-      color: #ddd   !important;
-    }
-    body.dark .keypad button[data-action="clear"] { background: #f44336 !important; }
-    body.dark .keypad button[data-action="equal"] { background: #4caf50 !important; }
-    body.dark .keypad button[data-action="divide"],
-    body.dark .keypad button[data-action="multiply"],
-    body.dark .keypad button[data-action="minus"],
-    body.dark .keypad button[data-action="plus"] {
-      background: #fbc02d !important;
-      color: #000 !important;
-    }
+    body.dark .keypad button { background:#444 !important; }
+    body.dark .keypad button.clear   { background:#f44336 !important; }
+    body.dark .keypad button.equal   { background:#4caf50 !important; }
+    body.dark .keypad button.op      { background:#fbc02d !important; color:#000 !important; }
   </style>
 </head>
 <body>
@@ -127,33 +93,32 @@
       <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
 
-    <div class="keypad">
-      <button data-action="clear">C</button>
-      <button data-action="back">←</button>
-      <button data-action="swap">🔄</button>
-      <button data-action="divide">÷</button>
+    <div class="keypad" id="keypad">
+      <button class="clear"   data-action="clear">C</button>
+      <button class="back"    data-action="back">←</button>
+      <button class="swap"    data-action="swap">🔄</button>
+      <button class="op"      data-key="÷">÷</button>
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
-      <button data-action="multiply">×</button>
+      <button class="op"      data-key="×">×</button>
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
-      <button data-action="minus">−</button>
+      <button class="op"      data-key="−">−</button>
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
-      <button data-action="plus">＋</button>
+      <button class="op"      data-key="＋">＋</button>
       <button data-key="0">0</button>
-      <button data-action="decimal">.</button>
-      <button data-action="equal">＝</button>
+      <button class="decimal" data-action="decimal">.</button>
+      <button class="equal"   data-action="equal">＝</button>
     </div>
   </div>
 
   <script>
   (function(){
-    // DOM 요소
-    const btns   = document.querySelectorAll('.keypad button');
+    const container = document.querySelector('.container');
     const flag1  = document.getElementById('flag1');
     const flag2  = document.getElementById('flag2');
     const code1  = document.getElementById('code1');
@@ -162,10 +127,11 @@
     const val2   = document.getElementById('value2');
     const rateT  = document.getElementById('rateTime');
     const unitR  = document.getElementById('unitRate');
+    const keypad = document.getElementById('keypad');
     const setBtn = document.querySelector('.settings-btn');
 
-    // 테마 적용
-    let theme = localStorage.getItem('theme') || 'light';
+    // 테마 복원
+    let theme = localStorage.getItem('theme')||'light';
     document.body.classList.add(theme);
     window.addEventListener('storage', e=>{
       if(e.key==='theme'){
@@ -174,22 +140,21 @@
       }
     });
 
-    // 입력 저장
     let inputStr = '';
 
     function updateDisplay(){
-      const num = Number(inputStr) || 0;
-      val1.innerText = num.toLocaleString();
+      const n = Number(inputStr)||0;
+      val1.innerText = n.toLocaleString();
     }
 
     async function fetchAndConvert(){
-      // 식 계산
+      // 수식 계산
       let amt = 0;
       try {
         const expr = inputStr
           .replace(/×/g,'*').replace(/÷/g,'/')
           .replace(/−/g,'-').replace(/＋/g,'+');
-        amt = Function('"use strict";return('+ (expr||'0') +')')();
+        amt = Function('"use strict";return('+expr+')')();
       } catch {}
       if(isNaN(amt)) amt = 0;
 
@@ -199,7 +164,7 @@
         const js   = await res.json();
         const rate = js.rates[to];
 
-        rateT.innerText = '조회 시간: ' + new Date().toLocaleString();
+        rateT.innerText = '조회 시간: '+ new Date().toLocaleString();
         unitR.innerText = `1 ${from} = ${
           to==='KRW'
             ? Math.round(rate).toLocaleString()
@@ -211,65 +176,63 @@
           maximumFractionDigits: to==='KRW'?0:6
         });
       } catch(e){
-        alert('환율 호출 실패: ' + e.message);
+        alert('환율 호출 실패: '+e.message);
       }
     }
 
     function swapPanels(){
       [flag1.innerText,flag2.innerText] = [flag2.innerText,flag1.innerText];
       [code1.innerText,code2.innerText] = [code2.innerText,code1.innerText];
-      [val1.innerText,val2.innerText]   = [val2.innerText,val1.innerText];
-      inputStr = ''; updateDisplay();
+      [val1.innerText, val2.innerText]   = [val2.innerText,val1.innerText];
+      inputStr='';
+      updateDisplay();
       rateT.innerText = '조회 시간: --';
       unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
       fetchAndConvert();
     }
 
-    // 각 버튼 처리
-    btns.forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const action = btn.dataset.action;
-        const key    = btn.dataset.key;
+    keypad.addEventListener('click', e=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
 
-        if(action==='clear'){
-          inputStr = ''; updateDisplay();
-          val2.innerText = '0';
-          rateT.innerText = '조회 시간: --';
-          unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
+      const action = btn.dataset.action;
+      const key    = btn.dataset.key;
+
+      if(action==='clear'){
+        inputStr=''; updateDisplay();
+        val2.innerText='0';
+        rateT.innerText='조회 시간: --';
+        unitR.innerText=`1 ${code1.innerText} = -- ${code2.innerText}`;
+      }
+      else if(action==='back'){
+        inputStr = inputStr.slice(0,-1);
+        updateDisplay();
+      }
+      else if(action==='swap'){
+        swapPanels();
+      }
+      else if(action==='decimal'){
+        if(!inputStr.includes('.')) inputStr+='.';
+        updateDisplay();
+      }
+      else if(action==='equal'){
+        // 수식 먼저 계산
+        try {
+          const expr = inputStr
+            .replace(/×/g,'*').replace(/÷/g,'/')
+            .replace(/−/g,'-').replace(/＋/g,'+');
+          inputStr = String(Function('"use strict";return('+expr+')')());
+        } catch {
+          inputStr = '0';
         }
-        else if(action==='back'){
-          inputStr = inputStr.slice(0,-1);
-          updateDisplay();
-        }
-        else if(['divide','multiply','minus','plus'].includes(action)){
-          inputStr += btn.textContent;
-          updateDisplay();
-        }
-        else if(action==='decimal'){
-          if(!inputStr.includes('.')) inputStr += '.';
-          updateDisplay();
-        }
-        else if(action==='swap'){
-          swapPanels();
-        }
-        else if(action==='equal'){
-          // 내부 식 바로 계산
-          try {
-            const expr = inputStr
-              .replace(/×/g,'*').replace(/÷/g,'/')
-              .replace(/−/g,'-').replace(/＋/g,'+');
-            inputStr = String(Function('"use strict";return('+expr+')')());
-          } catch {
-            inputStr = '0';
-          }
-          updateDisplay();
-          fetchAndConvert();
-        }
-        else if(key){
-          inputStr += key;
-          updateDisplay();
-        }
-      });
+        updateDisplay();
+        fetchAndConvert();
+      }
+      else if(key){
+        // 숫자나 연산자 전부 append
+        inputStr += key;
+        updateDisplay();
+      }
     });
 
     setBtn.addEventListener('click', ()=>{
