@@ -13,52 +13,49 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
-      display: flex;
-      flex-direction: column;
+      position: relative;
+      display: flex; flex-direction: column;
       width: 100%; height: 100%;
-      max-width: 360px;
-      margin: 0 auto;
+      max-width: 360px; margin: 0 auto;
     }
 
-    /* ↓ 상단 영역 보이도록 변경 ↓ */
+    /* 설정 버튼 */
+    #settingsBtn {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 32px; height: 32px;
+      border: none; background: none;
+      font-size: 24px; cursor: pointer;
+    }
+
     .top {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       justify-content: center;
       border-bottom: 1px solid #ddd;
+      padding: 0 8px;
     }
     .rate-panel {
-      display: flex;
-      align-items: center;
-      padding: 16px;
+      display: flex; align-items: center; padding: 16px 0;
     }
     .flag   { font-size: 32px; margin-right: 12px; }
     .code   { flex: 1; font-size: 20px; font-weight: 500; color: #555; }
     .amount { font-size: 24px; font-weight: 700; }
     .stamp {
-      text-align: center;
-      font-size: 14px;
-      color: #888;
+      text-align: center; font-size: 14px; color: #888;
       padding: 4px 0;
     }
 
-    /* ↓ 키패드는 화면 꽉 채우기 ↓ */
     .keypad {
       flex: 4;
       display: grid;
       grid-template-columns: repeat(4,1fr);
       grid-template-rows: repeat(5,1fr);
-      gap: 8px;
-      padding: 12px;
-      box-sizing: border-box;
+      gap: 8px; padding: 12px; box-sizing: border-box;
     }
     .keypad button {
-      border: none;
-      border-radius: 8px;
-      font-size: 20px;
-      font-weight: 500;
-      cursor: pointer;
+      border: none; border-radius: 8px;
+      font-size: 20px; font-weight: 500; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       background: #e0e0e0;
     }
@@ -72,13 +69,15 @@
     .keypad button[data-action="plus"]     { background: #fbc02d; }
     .keypad button[data-action="equal"] {
       background: #4caf50; color: #fff;
-      grid-column: span 2;
-      font-size: 22px;
+      grid-column: span 2; font-size: 22px;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- 설정 버튼 -->
+    <button id="settingsBtn" title="설정">⚙️</button>
+
     <div class="top">
       <div class="rate-panel">
         <span id="flag1" class="flag">🇺🇸</span>
@@ -127,7 +126,8 @@
           v2 = document.getElementById('value2'),
           rt = document.getElementById('rateTime'),
           ur = document.getElementById('unitRate'),
-          kb = document.getElementById('keypad');
+          kb = document.getElementById('keypad'),
+          sb = document.getElementById('settingsBtn');
 
     let inputStr = '';
 
@@ -154,17 +154,15 @@
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // —— 조회 시간: 실제 로딩 시점의 now
+        // 조회 시간: now 로 업데이트
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
 
-        // —— 단위환율
+        // 단위 환율 표시
         ur.innerText = `1 ${from} = ${
-          to==='KRW'
-            ? Math.round(rate).toLocaleString()
-            : rate.toFixed(6)
+          to==='KRW'? Math.round(rate).toLocaleString() : rate.toFixed(6)
         } ${to}`;
 
-        // —— 변환 결과
+        // 결과
         const result = amt * rate;
         v2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'? 0:6
@@ -178,8 +176,7 @@
       [f1.innerText,f2.innerText] = [f2.innerText,f1.innerText];
       [c1.innerText,c2.innerText] = [c2.innerText,c1.innerText];
       [v1.innerText,v2.innerText] = [v2.innerText,v1.innerText];
-      inputStr = '';
-      updateDisplay();
+      inputStr=''; updateDisplay();
       rt.innerText = '조회 시간: --';
       ur.innerText = `1 ${c2.innerText} = -- ${c1.innerText}`;
       fetchAndConvert();
@@ -213,6 +210,11 @@
       else if (k){
         inputStr += k; updateDisplay();
       }
+    });
+
+    // 설정 버튼 클릭 → settings.html 로 이동
+    sb.addEventListener('click', ()=>{
+      window.location.href = 'settings.html';
     });
 
     updateDisplay();
