@@ -5,29 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>환율계산</title>
   <style>
-    /* —————————————————————————————— */
-    /*  레이아웃 복구 & 테마 스타일       */
-    /* —————————————————————————————— */
+    /* ——— 전체 레이아웃 & 테마 ——— */
     html, body {
       margin:0; padding:0;
       width:100vw; height:100vh;
       overflow:hidden;
-      background:#fff; color:#000;
-      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      font-family:-apple-system, BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen;
     }
+    body.light { background:#fff; color:#000; }
     body.dark  { background:#222; color:#ddd; }
     body.pink  { background:#ffe4e1; color:#333; }
     body.mint  { background:#e0f7fa; color:#004d40; }
 
     .container {
-      width:100%; max-width:360px;
-      height:100%; margin:0 auto;
-      display:flex; flex-direction:column;
+      width:100%; max-width:360px; height:100%;
+      margin:0 auto; display:flex; flex-direction:column;
     }
     .top {
+      position:relative;
       flex:1; padding:16px 12px 0;
       border-bottom:1px solid #ddd;
-      position:relative; box-sizing:border-box;
+      box-sizing:border-box;
     }
     .settings-btn {
       position:absolute; top:16px; right:12px;
@@ -67,11 +65,11 @@
       background:#4caf50; color:#fff;
       grid-column:span 2; font-size:22px;
     }
-
+    /* 다크 테마 버튼 색 보정 */
     body.dark .keypad button { background:#444 !important; }
     body.dark .keypad button.clear   { background:#f44336 !important; }
     body.dark .keypad button.equal   { background:#4caf50 !important; }
-    body.dark .keypad button.op      { background:#fbc02d !important; color:#000 !important; }
+    body.dark .keypad button.op      { background:#fbc02d !important; color:#000!important; }
   </style>
 </head>
 <body>
@@ -98,18 +96,22 @@
       <button class="back"    data-action="back">←</button>
       <button class="swap"    data-action="swap">🔄</button>
       <button class="op"      data-key="÷">÷</button>
+
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button class="op"      data-key="×">×</button>
+
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button class="op"      data-key="−">−</button>
+
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button class="op"      data-key="＋">＋</button>
+
       <button data-key="0">0</button>
       <button class="decimal" data-action="decimal">.</button>
       <button class="equal"   data-action="equal">＝</button>
@@ -118,20 +120,19 @@
 
   <script>
   (function(){
-    const container = document.querySelector('.container');
-    const flag1  = document.getElementById('flag1');
-    const flag2  = document.getElementById('flag2');
-    const code1  = document.getElementById('code1');
-    const code2  = document.getElementById('code2');
-    const val1   = document.getElementById('value1');
-    const val2   = document.getElementById('value2');
-    const rateT  = document.getElementById('rateTime');
-    const unitR  = document.getElementById('unitRate');
-    const keypad = document.getElementById('keypad');
-    const setBtn = document.querySelector('.settings-btn');
+    const flag1   = document.getElementById('flag1');
+    const flag2   = document.getElementById('flag2');
+    const code1   = document.getElementById('code1');
+    const code2   = document.getElementById('code2');
+    const val1    = document.getElementById('value1');
+    const val2    = document.getElementById('value2');
+    const rateT   = document.getElementById('rateTime');
+    const unitR   = document.getElementById('unitRate');
+    const setBtn  = document.querySelector('.settings-btn');
+    const buttons = document.querySelectorAll('.keypad button');
 
     // 테마 복원
-    let theme = localStorage.getItem('theme')||'light';
+    let theme = localStorage.getItem('theme') || 'light';
     document.body.classList.add(theme);
     window.addEventListener('storage', e=>{
       if(e.key==='theme'){
@@ -143,12 +144,12 @@
     let inputStr = '';
 
     function updateDisplay(){
-      const n = Number(inputStr)||0;
+      const n = Number(inputStr) || 0;
       val1.innerText = n.toLocaleString();
     }
 
     async function fetchAndConvert(){
-      // 수식 계산
+      // 1) 수식 계산
       let amt = 0;
       try {
         const expr = inputStr
@@ -158,6 +159,7 @@
       } catch {}
       if(isNaN(amt)) amt = 0;
 
+      // 2) 환율 API
       const from = code1.innerText, to = code2.innerText;
       try {
         const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
@@ -181,65 +183,64 @@
     }
 
     function swapPanels(){
-      [flag1.innerText,flag2.innerText] = [flag2.innerText,flag1.innerText];
-      [code1.innerText,code2.innerText] = [code2.innerText,code1.innerText];
-      [val1.innerText, val2.innerText]   = [val2.innerText,val1.innerText];
-      inputStr='';
-      updateDisplay();
-      rateT.innerText = '조회 시간: --';
-      unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
+      [flag1.innerText, flag2.innerText] = [flag2.innerText, flag1.innerText];
+      [code1.innerText, code2.innerText] = [code2.innerText, code1.innerText];
+      [val1.innerText, val2.innerText]   = [val2.innerText, val1.innerText];
+      inputStr=''; updateDisplay();
+      rateT.innerText='조회 시간: --';
+      unitR.innerText=`1 ${code1.innerText} = -- ${code2.innerText}`;
       fetchAndConvert();
     }
 
-    keypad.addEventListener('click', e=>{
-      const btn = e.target.closest('button');
-      if(!btn) return;
+    // 각 버튼에 개별 리스너
+    buttons.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const action = btn.dataset.action;
+        const key    = btn.dataset.key;
 
-      const action = btn.dataset.action;
-      const key    = btn.dataset.key;
-
-      if(action==='clear'){
-        inputStr=''; updateDisplay();
-        val2.innerText='0';
-        rateT.innerText='조회 시간: --';
-        unitR.innerText=`1 ${code1.innerText} = -- ${code2.innerText}`;
-      }
-      else if(action==='back'){
-        inputStr = inputStr.slice(0,-1);
-        updateDisplay();
-      }
-      else if(action==='swap'){
-        swapPanels();
-      }
-      else if(action==='decimal'){
-        if(!inputStr.includes('.')) inputStr+='.';
-        updateDisplay();
-      }
-      else if(action==='equal'){
-        // 수식 먼저 계산
-        try {
-          const expr = inputStr
-            .replace(/×/g,'*').replace(/÷/g,'/')
-            .replace(/−/g,'-').replace(/＋/g,'+');
-          inputStr = String(Function('"use strict";return('+expr+')')());
-        } catch {
-          inputStr = '0';
+        if(action==='clear'){
+          inputStr=''; updateDisplay();
+          val2.innerText='0';
+          rateT.innerText='조회 시간: --';
+          unitR.innerText=`1 ${code1.innerText} = -- ${code2.innerText}`;
         }
-        updateDisplay();
-        fetchAndConvert();
-      }
-      else if(key){
-        // 숫자나 연산자 전부 append
-        inputStr += key;
-        updateDisplay();
-      }
+        else if(action==='back'){
+          inputStr = inputStr.slice(0,-1);
+          updateDisplay();
+        }
+        else if(action==='swap'){
+          swapPanels();
+        }
+        else if(action==='decimal'){
+          if(!inputStr.includes('.')) inputStr+='.';
+          updateDisplay();
+        }
+        else if(action==='equal'){
+          // 화면 위 연산기호 합산 → 실제 결과로 교체
+          try {
+            const expr = inputStr
+              .replace(/×/g,'*').replace(/÷/g,'/')
+              .replace(/−/g,'-').replace(/＋/g,'+');
+            inputStr = String(Function('"use strict";return('+expr+')')());
+          } catch {
+            inputStr = '0';
+          }
+          updateDisplay();
+          fetchAndConvert();
+        }
+        else if(key){
+          // 숫자·연산자 전부 append
+          inputStr += key;
+          updateDisplay();
+        }
+      });
     });
 
     setBtn.addEventListener('click', ()=>{
       window.open('settings.html','_blank');
     });
 
-    // 초기화
+    // 초기 렌더링
     updateDisplay();
     fetchAndConvert();
   })();
