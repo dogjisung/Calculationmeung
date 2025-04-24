@@ -19,13 +19,18 @@
       max-width: 360px; margin: 0 auto;
     }
 
-    /* 설정 버튼 */
+    /* 설정 버튼: 여백 늘리고 z-index 추가 */
     #settingsBtn {
       position: absolute;
-      top: 8px; right: 8px;
-      width: 32px; height: 32px;
-      border: none; background: none;
-      font-size: 24px; cursor: pointer;
+      top: 24px;
+      right: 24px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      font-size: 24px;
+      cursor: pointer;
+      z-index: 10;
     }
 
     .top {
@@ -75,7 +80,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- 설정 버튼 -->
+    <!-- 여백 있는 위치로 이동된 설정 버튼 -->
     <button id="settingsBtn" title="설정">⚙️</button>
 
     <div class="top">
@@ -154,15 +159,11 @@
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // 조회 시간: now 로 업데이트
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
-
-        // 단위 환율 표시
         ur.innerText = `1 ${from} = ${
           to==='KRW'? Math.round(rate).toLocaleString() : rate.toFixed(6)
         } ${to}`;
 
-        // 결과
         const result = amt * rate;
         v2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'? 0:6
@@ -212,7 +213,6 @@
       }
     });
 
-    // 설정 버튼 클릭 → settings.html 로 이동
     sb.addEventListener('click', ()=>{
       window.location.href = 'settings.html';
     });
