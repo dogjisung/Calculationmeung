@@ -6,89 +6,95 @@
   <title>환율계산</title>
   <style>
     html, body {
-      margin: 0; padding: 0;
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-      background: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      margin:0; padding:0;
+      width:100vw; height:100vh;
+      overflow:hidden;
+      background:#fff;
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
-      position: relative;
-      display: flex; flex-direction: column;
-      width: 100%; height: 100%;
-      max-width: 360px; margin: 0 auto;
+      display:flex; flex-direction:column;
+      width:100%; height:100%;
+      max-width:360px; margin:0 auto;
+      position:relative;
     }
-
-    /* 설정 버튼: divide 버튼 바로 위에 위치하도록 top 조정 */
-    #settingsBtn {
-      position: absolute;
-      top: 220px;    /* 이 값을 조절해 주세요 */
-      right: 24px;
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: none;
-      font-size: 24px;
-      cursor: pointer;
-      z-index: 10;
-    }
-
     .top {
-      flex: 1;
-      display: flex; flex-direction: column;
-      justify-content: center;
-      border-bottom: 1px solid #ddd;
-      padding: 0 8px;
+      flex:1;
+      position:relative;            /* settingsBtn 절대위치를 위해 */
+      padding:16px 8px 0;
+      border-bottom:1px solid #ddd;
     }
-    .rate-panel { display: flex; align-items: center; padding: 16px 0; }
-    .flag   { font-size: 32px; margin-right: 12px; }
-    .code   { flex: 1; font-size: 20px; font-weight: 500; color: #555; }
-    .amount { font-size: 24px; font-weight: 700; }
-    .stamp  { text-align: center; font-size: 14px; color: #888; padding: 4px 0; }
-
+    /* 톱니 아이콘: .top 안 우측 상단 */
+    #settingsBtn {
+      position:absolute;
+      top:16px;
+      right:8px;
+      width:28px; height:28px;
+      border:none;
+      background:none;
+      font-size:24px;
+      cursor:pointer;
+    }
+    .rate-panel {
+      display:flex; align-items:center;
+      padding:12px 0;
+      border-top:1px solid #eee;
+    }
+    .rate-panel:first-of-type { border-top:none; }
+    .flag   { font-size:32px; margin-right:12px; }
+    .code   { flex:1; font-size:20px; font-weight:500; color:#555; }
+    .amount { font-size:24px; font-weight:700; }
+    .stamp {
+      text-align:center; font-size:14px; color:#888;
+      margin:4px 0;
+    }
     .keypad {
-      flex: 4;
-      display: grid;
-      grid-template-columns: repeat(4,1fr);
-      grid-template-rows: repeat(5,1fr);
-      gap: 8px; padding: 12px; box-sizing: border-box;
+      flex:4;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-template-rows:repeat(5,1fr);
+      gap:8px; padding:12px;
+      box-sizing:border-box;
     }
     .keypad button {
-      border: none; border-radius: 8px;
-      font-size: 20px; font-weight: 500; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      background: #e0e0e0;
+      border:none; border-radius:8px;
+      font-size:20px; font-weight:500; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      background:#e0e0e0;
     }
-    .keypad button[data-action="clear"]    { background: #f44336; color: #fff; }
+    .keypad button[data-action="clear"]    { background:#f44336; color:#fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="swap"],
-    .keypad button[data-action="decimal"] { background: #ccc; }
+    .keypad button[data-action="decimal"] { background:#ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"]     { background: #fbc02d; }
+    .keypad button[data-action="plus"]     { background:#fbc02d; }
     .keypad button[data-action="equal"] {
-      background: #4caf50; color: #fff;
-      grid-column: span 2; font-size: 22px;
+      background:#4caf50; color:#fff;
+      grid-column:span 2; font-size:22px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- divide 버튼 바로 위로 이동된 설정 아이콘 -->
-    <button id="settingsBtn" title="설정">⚙️</button>
-
     <div class="top">
+      <!-- 설정 버튼 -->
+      <button id="settingsBtn" title="설정">⚙️</button>
+
+      <!-- USD → KRW -->
       <div class="rate-panel">
         <span id="flag1" class="flag">🇺🇸</span>
         <span id="code1" class="code">USD</span>
         <span id="value1" class="amount">0</span>
       </div>
+      <!-- KRW ← USD -->
       <div class="rate-panel">
         <span id="flag2" class="flag">🇰🇷</span>
         <span id="code2" class="code">KRW</span>
         <span id="value2" class="amount">0</span>
       </div>
+
       <div id="rateTime" class="stamp">조회 시간: --</div>
       <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
@@ -133,7 +139,8 @@
     function updateDisplay(){ v1.innerText = inputStr||'0'; }
 
     async function fetchAndConvert(){
-      const expr = inputStr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+      const expr = inputStr
+        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
       let amt=0;
       try{ amt = Function('"use strict";return('+ (expr||'0') +')')(); }
       catch{ amt=0; }
@@ -151,12 +158,12 @@
           to==='KRW'? Math.round(rate).toLocaleString(): rate.toFixed(6)
         } ${to}`;
 
-        const result = amt*rate;
+        const result=amt*rate;
         v2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'?0:6
         });
       }catch(e){
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+ e.message);
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류:'+e.message);
       }
     }
 
@@ -166,18 +173,18 @@
       [v1.innerText,v2.innerText]=[v2.innerText,v1.innerText];
       inputStr=''; updateDisplay();
       rt.innerText='조회 시간: --';
-      ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
+      ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
       fetchAndConvert();
     }
 
     kb.addEventListener('click',e=>{
-      if(e.target.tagName!=='BUTTON')return;
+      if(e.target.tagName!=='BUTTON') return;
       const a=e.target.dataset.action, k=e.target.dataset.key;
       if(a==='clear'){
         inputStr=''; updateDisplay();
         v2.innerText='0';
         rt.innerText='조회 시간: --';
-        ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
+        ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
       }
       else if(a==='back'){
         inputStr=inputStr.slice(0,-1); updateDisplay();
@@ -201,7 +208,7 @@
     });
 
     sb.addEventListener('click',()=>{
-      window.location.href='settings.html';
+      location.href = 'settings.html';
     });
 
     updateDisplay();
