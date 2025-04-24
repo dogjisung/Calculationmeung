@@ -23,25 +23,18 @@
       position: relative;
       padding: 16px 8px 0;
       border-bottom: 1px solid #ddd;
-      flex: 1;
-      box-sizing: border-box;
+      flex: 1; box-sizing: border-box;
     }
-    /* 설정 버튼: 스탬프 바로 위, 우측 끝 */
     .settings-btn {
       position: absolute;
-      /* 보라 네모 위치에 맞춤 */
-      top: 170px;    /* 스탬프 영역 바로 위 */
-      right: 15px;  /* 우측 여백 */
+      top: 68px; right: 12px;
       width: 28px; height: 28px;
-      background: none;
-      border: none;
-      cursor: pointer;
+      background: none; border: none; cursor: pointer;
       font-size: 24px;
     }
     .rate-panel {
       display: flex; align-items: center;
-      padding: 12px 0;
-      border-top: 1px solid #eee;
+      padding: 12px 0; border-top: 1px solid #eee;
     }
     .rate-panel:first-of-type { border-top: none; }
     .flag   { font-size: 32px; margin-right: 12px; }
@@ -56,8 +49,7 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(5, 1fr);
-      gap: 8px; padding: 12px;
-      box-sizing: border-box;
+      gap: 8px; padding: 12px; box-sizing: border-box;
     }
     .keypad button {
       font-size: 20px; border: none; border-radius: 8px;
@@ -81,10 +73,7 @@
 <body>
   <div class="container">
     <div class="top">
-      <!-- 설정 버튼 -->
       <button class="settings-btn" title="설정">⚙️</button>
-
-      <!-- 환율 표시 패널 -->
       <div class="rate-panel">
         <span id="flag1" class="flag">🇺🇸</span>
         <span id="code1" class="code">USD</span>
@@ -99,7 +88,6 @@
       <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
 
-    <!-- 계산기 키패드 -->
     <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -137,29 +125,32 @@
           sb = document.querySelector('.settings-btn');
 
     let inputStr = '';
-    function updateDisplay(){ v1.innerText = inputStr||'0'; }
+    function updateDisplay(){ v1.innerText = inputStr || '0'; }
 
     async function fetchAndConvert(){
+      // expression → numeric
       const expr = inputStr
-          .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
       let amt = 0;
-      try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
+      try { amt = Function('"use strict";return(' + (expr||'0') + ')')(); }
       catch { amt = 0; }
       if (isNaN(amt)) amt = 0;
 
       const from = c1.innerText, to = c2.innerText;
       try {
-        const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+        const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
         if (!res.ok) throw new Error(res.status);
-        const js   = await res.json();
+        const js = await res.json();
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
+        // 조회 시간 & 단위 환율
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
         ur.innerText = `1 ${from} = ${
-          to==='KRW'? Math.round(rate).toLocaleString(): rate.toFixed(6)
+          to==='KRW' ? Math.round(rate).toLocaleString() : rate.toFixed(6)
         } ${to}`;
 
+        // 변환 결과
         const result = amt * rate;
         v2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'?0:6
@@ -179,37 +170,49 @@
       fetchAndConvert();
     }
 
-    kb.addEventListener('click', e=>{
-      if (e.target.tagName!=='BUTTON') return;
-      const a = e.target.dataset.action, k = e.target.dataset.key;
-      if (a==='clear'){
-        inputStr=''; updateDisplay();
+    kb.addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') return;
+      const act = e.target.dataset.action, key = e.target.dataset.key;
+
+      if (act === 'clear') {
+        inputStr = ''; updateDisplay();
         v2.innerText = '0';
         rt.innerText = '조회 시간: --';
         ur.innerText = `1 ${c1.innerText} = -- ${c2.innerText}`;
       }
-      else if(a==='back'){
+      else if (act === 'back') {
         inputStr = inputStr.slice(0,-1); updateDisplay();
       }
-      else if(['divide','multiply','minus','plus'].includes(a)){
+      else if (['divide','multiply','minus','plus'].includes(act)) {
         inputStr += e.target.textContent; updateDisplay();
       }
-      else if(a==='decimal'){
-        if(!inputStr.includes('.')) inputStr+='.';
+      else if (act === 'decimal') {
+        if (!inputStr.includes('.')) inputStr += '.';
         updateDisplay();
       }
-      else if(a==='swap'){
+      else if (act === 'swap') {
         swapPanels();
       }
-      else if(a==='equal'){
+      else if (act === 'equal') {
+        // **수식 먼저 계산해서 inputStr에 결과로 덮어쓰기**
+        try {
+          const safeExpr = inputStr
+            .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+          let calc = Function('"use strict";return(' + (safeExpr||'0') + ')')();
+          if (isNaN(calc)) calc = 0;
+          inputStr = calc.toString();
+        } catch {
+          inputStr = '0';
+        }
+        updateDisplay();
         fetchAndConvert();
       }
-      else if(k){
-        inputStr += k; updateDisplay();
+      else if (key) {
+        inputStr += key; updateDisplay();
       }
     });
 
-    sb.addEventListener('click', ()=>{
+    sb.addEventListener('click', () => {
       location.href = 'settings.html';
     });
 
