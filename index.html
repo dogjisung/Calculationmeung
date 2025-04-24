@@ -74,6 +74,7 @@
   <div class="container">
     <div class="top">
       <button class="settings-btn" title="설정">⚙️</button>
+
       <div class="rate-panel">
         <span id="flag1" class="flag">🇺🇸</span>
         <span id="code1" class="code">USD</span>
@@ -125,14 +126,28 @@
           sb = document.querySelector('.settings-btn');
 
     let inputStr = '';
-    function updateDisplay(){ v1.innerText = inputStr || '0'; }
+
+    // 여길 고침: 숫자만 있을 때는 toLocaleString으로 콤마 찍기
+    function updateDisplay(){
+      const raw = inputStr || '0';
+      if (/^[0-9.]+$/.test(raw)) {
+        const num = parseFloat(raw);
+        v1.innerText = isNaN(num)
+          ? raw
+          : num.toLocaleString(undefined, { maximumFractionDigits: 6 });
+      } else {
+        v1.innerText = raw;
+      }
+    }
 
     async function fetchAndConvert(){
-      // expression → numeric
       const expr = inputStr
-        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+        .replace(/×/g,'*')
+        .replace(/÷/g,'/')
+        .replace(/−/g,'-')
+        .replace(/＋/g,'+');
       let amt = 0;
-      try { amt = Function('"use strict";return(' + (expr||'0') + ')')(); }
+      try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
       catch { amt = 0; }
       if (isNaN(amt)) amt = 0;
 
@@ -140,19 +155,19 @@
       try {
         const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
         if (!res.ok) throw new Error(res.status);
-        const js = await res.json();
+        const js   = await res.json();
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // 조회 시간 & 단위 환율
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
         ur.innerText = `1 ${from} = ${
-          to==='KRW' ? Math.round(rate).toLocaleString() : rate.toFixed(6)
+          to==='KRW'
+            ? Math.round(rate).toLocaleString()
+            : rate.toFixed(6)
         } ${to}`;
 
-        // 변환 결과
         const result = amt * rate;
-        v2.innerText = result.toLocaleString(undefined,{
+        v2.innerText = result.toLocaleString(undefined, {
           maximumFractionDigits: to==='KRW'?0:6
         });
       } catch(e) {
@@ -170,9 +185,10 @@
       fetchAndConvert();
     }
 
-    kb.addEventListener('click', e => {
+    kb.addEventListener('click', e=>{
       if (e.target.tagName !== 'BUTTON') return;
-      const act = e.target.dataset.action, key = e.target.dataset.key;
+      const act = e.target.dataset.action,
+            key = e.target.dataset.key;
 
       if (act === 'clear') {
         inputStr = ''; updateDisplay();
@@ -194,11 +210,14 @@
         swapPanels();
       }
       else if (act === 'equal') {
-        // **수식 먼저 계산해서 inputStr에 결과로 덮어쓰기**
+        // 수식 먼저 계산해서 inputStr에 결과로 덮어쓰기
         try {
           const safeExpr = inputStr
-            .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
-          let calc = Function('"use strict";return(' + (safeExpr||'0') + ')')();
+            .replace(/×/g,'*')
+            .replace(/÷/g,'/')
+            .replace(/−/g,'-')
+            .replace(/＋/g,'+');
+          let calc = Function('"use strict";return('+ (safeExpr||'0') +')')();
           if (isNaN(calc)) calc = 0;
           inputStr = calc.toString();
         } catch {
@@ -212,7 +231,7 @@
       }
     });
 
-    sb.addEventListener('click', () => {
+    sb.addEventListener('click', ()=>{
       location.href = 'settings.html';
     });
 
