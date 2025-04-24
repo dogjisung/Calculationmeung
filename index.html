@@ -5,30 +5,47 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산</title>
   <style>
-    /* ================= 전체 레이아웃 ================= */
     html, body {
       margin: 0; padding: 0;
-      width: 100vw;  height: 100vh;
-      overflow: hidden;          /* 스크롤 제거 */
+      width: 100vw; height: 100vh;
+      overflow: hidden;
       background: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
       display: flex;
       flex-direction: column;
-      width: 100%;  height: 100%;
+      width: 100%; height: 100%;
       max-width: 360px;
       margin: 0 auto;
     }
 
-    /* ================ 상단(숨김) ================ */
+    /* ↓ 상단 영역 보이도록 변경 ↓ */
     .top {
-      display: none;            /* 상단 영역 완전 숨김 */
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-bottom: 1px solid #ddd;
+    }
+    .rate-panel {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+    }
+    .flag   { font-size: 32px; margin-right: 12px; }
+    .code   { flex: 1; font-size: 20px; font-weight: 500; color: #555; }
+    .amount { font-size: 24px; font-weight: 700; }
+    .stamp {
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      padding: 4px 0;
     }
 
-    /* ================ 키패드 영역 ================ */
+    /* ↓ 키패드는 화면 꽉 채우기 ↓ */
     .keypad {
-      flex: 1;
+      flex: 4;
       display: grid;
       grid-template-columns: repeat(4,1fr);
       grid-template-rows: repeat(5,1fr);
@@ -39,7 +56,8 @@
     .keypad button {
       border: none;
       border-radius: 8px;
-      font-size: 20px; font-weight: 500;
+      font-size: 20px;
+      font-weight: 500;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       background: #e0e0e0;
@@ -61,44 +79,38 @@
 </head>
 <body>
   <div class="container">
-    <!-- 숨겨진 상단(스크립트용으로 남겨두되 CSS로 display:none 처리) -->
     <div class="top">
       <div class="rate-panel">
-        <span id="flag1">🇺🇸</span>
-        <span id="code1">USD</span>
-        <span id="value1">0</span>
+        <span id="flag1" class="flag">🇺🇸</span>
+        <span id="code1" class="code">USD</span>
+        <span id="value1" class="amount">0</span>
       </div>
       <div class="rate-panel">
-        <span id="flag2">🇰🇷</span>
-        <span id="code2">KRW</span>
-        <span id="value2">0</span>
+        <span id="flag2" class="flag">🇰🇷</span>
+        <span id="code2" class="code">KRW</span>
+        <span id="value2" class="amount">0</span>
       </div>
-      <div id="rateTime">조회 시간: --</div>
-      <div id="unitRate">1 KRW = -- USD</div>
+      <div id="rateTime" class="stamp">조회 시간: --</div>
+      <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
 
-    <!-- 계산기 키패드 -->
     <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button data-action="swap">🔄</button>
       <button data-action="divide">÷</button>
-
       <button data-key="7">7</button>
       <button data-key="8">8</button>
       <button data-key="9">9</button>
       <button data-action="multiply">×</button>
-
       <button data-key="4">4</button>
       <button data-key="5">5</button>
       <button data-key="6">6</button>
       <button data-action="minus">−</button>
-
       <button data-key="1">1</button>
       <button data-key="2">2</button>
       <button data-key="3">3</button>
       <button data-action="plus">＋</button>
-
       <button data-key="0">0</button>
       <button data-action="decimal">.</button>
       <button data-action="equal">＝</button>
@@ -124,17 +136,17 @@
     }
 
     async function fetchAndConvert(){
-      // 1) 연산
       const expr = inputStr
-        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+        .replace(/×/g,'*')
+        .replace(/÷/g,'/')
+        .replace(/−/g,'-')
+        .replace(/＋/g,'+');
       let amt = 0;
       try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
       catch { amt = 0; }
       if (isNaN(amt)) amt = 0;
 
-      // 2) 통화코드
       const from = c1.innerText, to = c2.innerText;
-
       try {
         const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
         if (!res.ok) throw new Error(res.status);
@@ -142,17 +154,21 @@
         const rate = js.rates[to];
         if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // 조회시간 (실제 호출 시각)
+        // —— 조회 시간: 실제 로딩 시점의 now
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
 
-        // 단위환율 표시
-        ur.innerText = `1 ${from} = ${ to==='KRW' ? Math.round(rate).toLocaleString() : rate.toFixed(6) } ${to}`;
+        // —— 단위환율
+        ur.innerText = `1 ${from} = ${
+          to==='KRW'
+            ? Math.round(rate).toLocaleString()
+            : rate.toFixed(6)
+        } ${to}`;
 
-        // 결과 변환
+        // —— 변환 결과
         const result = amt * rate;
-        // 천단위 , 표시
-        const fmt = num => num.toLocaleString(undefined, { maximumFractionDigits:6 });
-        v2.innerText = fmt(result);
+        v2.innerText = result.toLocaleString(undefined,{
+          maximumFractionDigits: to==='KRW'? 0:6
+        });
       } catch(e){
         alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+ e.message);
       }
@@ -162,17 +178,16 @@
       [f1.innerText,f2.innerText] = [f2.innerText,f1.innerText];
       [c1.innerText,c2.innerText] = [c2.innerText,c1.innerText];
       [v1.innerText,v2.innerText] = [v2.innerText,v1.innerText];
-      inputStr='';
+      inputStr = '';
       updateDisplay();
       rt.innerText = '조회 시간: --';
       ur.innerText = `1 ${c2.innerText} = -- ${c1.innerText}`;
       fetchAndConvert();
     }
 
-    kb.addEventListener('click', e => {
+    kb.addEventListener('click', e=>{
       if (e.target.tagName!=='BUTTON') return;
       const a = e.target.dataset.action, k = e.target.dataset.key;
-
       if (a==='clear'){
         inputStr=''; updateDisplay();
         v2.innerText='0';
