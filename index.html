@@ -46,11 +46,10 @@
     .amount { font-size:24px; font-weight:700; }
     .stamp {
       text-align:center; font-size:14px;
-      margin:4px 0; color:inherit;
+      margin:4px 0;
     }
 
     .keypad {
-      position:relative; z-index:1;
       flex:4;
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -75,7 +74,6 @@
       background:#4caf50; color:#fff;
       grid-column:span 2; font-size:22px;
     }
-    /* 다크/핑크/민트 테마용 버튼 보정 omitted for brevity */
   </style>
 </head>
 <body>
@@ -122,85 +120,99 @@
 
   <script>
   (function(){
-    const f1 = $('#flag1'), f2 = $('#flag2'),
-          c1 = $('#code1'), c2 = $('#code2'),
-          v1 = $('#value1'), v2 = $('#value2'),
-          rt = $('#rateTime'), ur = $('#unitRate'),
-          kb = $('#keypad'), sb = $('.settings-btn');
+    // DOM
+    const flag1 = document.getElementById('flag1'),
+          flag2 = document.getElementById('flag2'),
+          code1 = document.getElementById('code1'),
+          code2 = document.getElementById('code2'),
+          val1  = document.getElementById('value1'),
+          val2  = document.getElementById('value2'),
+          rateT = document.getElementById('rateTime'),
+          unitR = document.getElementById('unitRate'),
+          keypad= document.getElementById('keypad'),
+          setBtn= document.querySelector('.settings-btn');
 
-    // 1) 초기 테마 적용
-    let theme = localStorage.getItem('theme')||'light';
-    document.body.classList.add(theme);
-
-    // 2) storage 이벤트로 즉시 반영
+    // 테마 적용
+    let t = localStorage.getItem('theme') || 'light';
+    document.body.classList.add(t);
     window.addEventListener('storage', e=>{
       if(e.key==='theme'){
-        document.body.className = ''; // 제거
+        document.body.className = '';
         document.body.classList.add(e.newValue);
       }
     });
 
+    // 입력 & 표시
     let inputStr = '';
-    const updateDisplay = ()=>{
-      // v1도 콤마 찍어 줌
-      let num = Number(inputStr)||0;
-      v1.text(num.toLocaleString());
-    };
+    function updateDisplay(){
+      const n = Number(inputStr) || 0;
+      val1.innerText = n.toLocaleString();
+    }
 
+    // 환율 가져와서 계산
     async function fetchAndConvert(){
-      const expr = inputStr
-        .replace(/×/g,'*').replace(/÷/g,'/')
-        .replace(/−/g,'-').replace(/＋/g,'+');
-      let amt=0;
-      try{ amt=Function('"use strict";return('+expr+')')(); }
-      catch{ amt=0; }
-      if(isNaN(amt)) amt=0;
-
-      const from=c1.text(), to=c2.text();
+      // 연산 먼저
       try {
+        let expr = inputStr
+          .replace(/×/g,'*').replace(/÷/g,'/')
+          .replace(/−/g,'-').replace(/＋/g,'+');
+        let amt = Function('"use strict";return('+ (expr||'0') +')')();
+        if(isNaN(amt)) amt = 0;
+
+        const from = code1.innerText, to = code2.innerText;
         const res = await fetch(
           `https://api.frankfurter.app/latest?from=${from}&to=${to}`
         );
-        const js = await res.json();
-        const rate = js.rates[to];
-        rt.text('조회 시간: '+new Date().toLocaleString());
-        ur.text(`1 ${from} = ${to==='KRW'
-          ?Math.round(rate).toLocaleString()
-          :rate.toFixed(6)
-        } ${to}`);
+        const js  = await res.json();
+        const rate= js.rates[to];
 
-        const result = amt*rate;
-        v2.text(result.toLocaleString(undefined,{
+        rateT.innerText = '조회 시간: ' + new Date().toLocaleString();
+        unitR.innerText = `1 ${from} = ${
+          to==='KRW'
+            ? Math.round(rate).toLocaleString()
+            : rate.toFixed(6)
+        } ${to}`;
+
+        const result = amt * rate;
+        val2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'?0:6
-        }));
+        });
       } catch(e){
-        alert('환율 가져오기 실패: '+e.message);
+        alert('환율 정보 불러오기 실패: '+ e.message);
       }
     }
 
+    // 패널 스왑
     function swapPanels(){
-      [f1.text(),f2.text()] = [f2.text(),f1.text()];
-      [c1.text(),c2.text()] = [c2.text(),c1.text()];
-      [v1.text(),v2.text()] = [v2.text(),v1.text()];
-      inputStr=''; updateDisplay();
-      rt.text('조회 시간: --');
-      ur.text(`1 ${c1.text()} = -- ${c2.text()}`);
+      [flag1.innerText,flag2.innerText] = [flag2.innerText,flag1.innerText];
+      [code1.innerText,code2.innerText] = [code2.innerText,code1.innerText];
+      [val1.innerText,val2.innerText]   = [val2.innerText,val1.innerText];
+      inputStr = ''; updateDisplay();
+      rateT.innerText = '조회 시간: --';
+      unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
       fetchAndConvert();
     }
 
-    kb.on('click','button',e=>{
-      const btn=$(e.currentTarget), a=btn.data('action'), k=btn.data('key');
+    // 키패드 클릭 처리
+    keypad.addEventListener('click', e=>{
+      if(e.target.tagName!=='BUTTON') return;
+      const a = e.target.dataset.action;
+      const k = e.target.dataset.key;
+
       if(a==='clear'){
-        inputStr=''; updateDisplay();
-        v2.text('0');
-        rt.text('조회 시간: --');
-        ur.text(`1 ${c1.text()} = -- ${c2.text()}`);
+        inputStr='';
+        updateDisplay();
+        val2.innerText = '0';
+        rateT.innerText = '조회 시간: --';
+        unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
       }
       else if(a==='back'){
-        inputStr=inputStr.slice(0,-1); updateDisplay();
+        inputStr = inputStr.slice(0,-1);
+        updateDisplay();
       }
       else if(['divide','multiply','minus','plus'].includes(a)){
-        inputStr+=btn.text(); updateDisplay();
+        inputStr += e.target.textContent;
+        updateDisplay();
       }
       else if(a==='decimal'){
         if(!inputStr.includes('.')) inputStr+='.';
@@ -210,28 +222,34 @@
         swapPanels();
       }
       else if(a==='equal'){
-        // 수식 먼저 풀고
+        // 수식 평가
         try {
-          let val=Function('"use strict";return('+inputStr.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+')+')')();
-          inputStr = String(val);
-        } catch{
-          inputStr='0';
+          let expr = inputStr
+            .replace(/×/g,'*').replace(/÷/g,'/')
+            .replace(/−/g,'-').replace(/＋/g,'+');
+          inputStr = String(Function('"use strict";return('+expr+')')());
+        } catch {
+          inputStr = '0';
         }
         updateDisplay();
         fetchAndConvert();
       }
       else if(k){
-        inputStr+=k; updateDisplay();
+        inputStr += k;
+        updateDisplay();
       }
     });
 
-    // 설정은 새 창으로 띄워야 storage 이벤트가 살아있습니다.
-    sb.on('click', ()=> window.open('settings.html','_blank'));
+    // 설정 버튼
+    setBtn.addEventListener('click', ()=>{
+      window.open('settings.html','_blank');
+    });
 
+    // 초기
     updateDisplay();
     fetchAndConvert();
+
   })();
   </script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </body>
 </html>
