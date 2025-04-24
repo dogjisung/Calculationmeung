@@ -2,39 +2,37 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device‐width, initial‐scale=1"/>
   <title>환율계산</title>
   <style>
+    /* ---------------------------------------------------
+       레이아웃
+    --------------------------------------------------- */
     html, body {
       margin:0; padding:0;
       width:100vw; height:100vh;
       overflow:hidden;
       font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
-    body.light { background:#fff; color:#000; }
-    body.dark  { background:#222; color:#ddd; }
-    body.pink  { background:#ffe4e1; color:#333; }
-    body.mint  { background:#e0f7fa; color:#004d40; }
-
     .container {
       position:relative;
       width:100%; height:100%;
       max-width:360px; margin:0 auto;
       display:flex; flex-direction:column;
-      box-sizing:border-box;
     }
     .top {
       position:relative;
       padding:16px 8px 0;
       border-bottom:1px solid #ddd;
       flex:1;
+      box-sizing:border-box;
     }
     .settings-btn {
       position:absolute;
       top:16px; right:12px;
       width:28px; height:28px;
       background:none; border:none; cursor:pointer;
-      font-size:24px; z-index:10;
+      font-size:24px;
     }
     .rate-panel {
       display:flex; align-items:center;
@@ -48,7 +46,6 @@
       text-align:center; font-size:14px;
       margin:4px 0;
     }
-
     .keypad {
       flex:4;
       display:grid;
@@ -60,7 +57,7 @@
     .keypad button {
       font-size:20px; border:none; border-radius:8px;
       display:flex; align-items:center; justify-content:center;
-      cursor:pointer; background:#e0e0e0; color:inherit;
+      cursor:pointer; background:#e0e0e0; color:#000;
     }
     .keypad button[data-action="clear"]    { background:#f44336; color:#fff; }
     .keypad button[data-action="back"],
@@ -73,6 +70,29 @@
     .keypad button[data-action="equal"] {
       background:#4caf50; color:#fff;
       grid-column:span 2; font-size:22px;
+    }
+
+    /* ---------------------------------------------------
+       테마 정의
+    --------------------------------------------------- */
+    body.light { background:#fff; color:#000; }
+    body.dark  { background:#222; color:#ddd; }
+    body.pink  { background:#ffe4e1; color:#333; }
+    body.mint  { background:#e0f7fa; color:#004d40; }
+
+    /* 다크모드에서 키패드가 보이도록 오버라이드 */
+    body.dark .keypad button {
+      background: #444 !important;
+      color: #ddd   !important;
+    }
+    body.dark .keypad button[data-action="clear"]    { background:#f44336 !important; }
+    body.dark .keypad button[data-action="equal"]    { background:#4caf50 !important; }
+    /* 연산자 버튼은 원래 색 유지 */
+    body.dark .keypad button[data-action="divide"],
+    body.dark .keypad button[data-action="multiply"],
+    body.dark .keypad button[data-action="minus"],
+    body.dark .keypad button[data-action="plus"] {
+      background:#fbc02d !important; color:#000 !important;
     }
   </style>
 </head>
@@ -95,7 +115,7 @@
       <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
 
-    <div class="keypad" id="keypad">
+    <div class="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
       <button data-action="swap">🔄</button>
@@ -120,65 +140,69 @@
 
   <script>
   (function(){
-    // DOM
-    const flag1 = document.getElementById('flag1'),
-          flag2 = document.getElementById('flag2'),
-          code1 = document.getElementById('code1'),
-          code2 = document.getElementById('code2'),
-          val1  = document.getElementById('value1'),
-          val2  = document.getElementById('value2'),
-          rateT = document.getElementById('rateTime'),
-          unitR = document.getElementById('unitRate'),
-          keypad= document.getElementById('keypad'),
-          setBtn= document.querySelector('.settings-btn');
+    // 요소 캐싱
+    const btns   = document.querySelectorAll('.keypad button');
+    const flag1  = document.getElementById('flag1');
+    const flag2  = document.getElementById('flag2');
+    const code1  = document.getElementById('code1');
+    const code2  = document.getElementById('code2');
+    const val1   = document.getElementById('value1');
+    const val2   = document.getElementById('value2');
+    const rateT  = document.getElementById('rateTime');
+    const unitR  = document.getElementById('unitRate');
+    const setBtn = document.querySelector('.settings-btn');
 
-    // 테마 적용
-    let t = localStorage.getItem('theme') || 'light';
-    document.body.classList.add(t);
+    // 테마 초기화 & 리스너
+    let theme = localStorage.getItem('theme')||'light';
+    document.body.classList.add(theme);
     window.addEventListener('storage', e=>{
-      if(e.key==='theme'){
+      if (e.key==='theme') {
         document.body.className = '';
         document.body.classList.add(e.newValue);
       }
     });
 
-    // 입력 & 표시
+    // 입력 식
     let inputStr = '';
+
     function updateDisplay(){
-      const n = Number(inputStr) || 0;
+      const n = Number(inputStr)||0;
       val1.innerText = n.toLocaleString();
     }
 
-    // 환율 가져와서 계산
     async function fetchAndConvert(){
-      // 연산 먼저
+      // 수식 계산
+      let amt = 0;
       try {
-        let expr = inputStr
+        const expr = inputStr
           .replace(/×/g,'*').replace(/÷/g,'/')
           .replace(/−/g,'-').replace(/＋/g,'+');
-        let amt = Function('"use strict";return('+ (expr||'0') +')')();
-        if(isNaN(amt)) amt = 0;
+        amt = Function('"use strict";return('+ (expr||'0') +')')();
+      } catch {}
+      if (isNaN(amt)) amt = 0;
 
-        const from = code1.innerText, to = code2.innerText;
-        const res = await fetch(
-          `https://api.frankfurter.app/latest?from=${from}&to=${to}`
-        );
-        const js  = await res.json();
-        const rate= js.rates[to];
+      // API 호출
+      const from = code1.innerText, to = code2.innerText;
+      try {
+        const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+        const js   = await res.json();
+        const rate = js.rates[to];
 
-        rateT.innerText = '조회 시간: ' + new Date().toLocaleString();
+        // 조회 시간 & 단위 환율
+        rateT.innerText = '조회 시간: '+ new Date().toLocaleString();
         unitR.innerText = `1 ${from} = ${
           to==='KRW'
             ? Math.round(rate).toLocaleString()
             : rate.toFixed(6)
         } ${to}`;
 
+        // 환산 금액 표시
         const result = amt * rate;
         val2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'?0:6
         });
       } catch(e){
-        alert('환율 정보 불러오기 실패: '+ e.message);
+        alert('환율 호출 실패: '+ e.message);
       }
     }
 
@@ -187,68 +211,69 @@
       [flag1.innerText,flag2.innerText] = [flag2.innerText,flag1.innerText];
       [code1.innerText,code2.innerText] = [code2.innerText,code1.innerText];
       [val1.innerText,val2.innerText]   = [val2.innerText,val1.innerText];
-      inputStr = ''; updateDisplay();
+      inputStr = '';
+      updateDisplay();
       rateT.innerText = '조회 시간: --';
       unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
       fetchAndConvert();
     }
 
-    // 키패드 클릭 처리
-    keypad.addEventListener('click', e=>{
-      if(e.target.tagName!=='BUTTON') return;
-      const a = e.target.dataset.action;
-      const k = e.target.dataset.key;
+    // 버튼별 클릭 핸들러
+    btns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const a = btn.dataset.action;
+        const k = btn.dataset.key;
 
-      if(a==='clear'){
-        inputStr='';
-        updateDisplay();
-        val2.innerText = '0';
-        rateT.innerText = '조회 시간: --';
-        unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
-      }
-      else if(a==='back'){
-        inputStr = inputStr.slice(0,-1);
-        updateDisplay();
-      }
-      else if(['divide','multiply','minus','plus'].includes(a)){
-        inputStr += e.target.textContent;
-        updateDisplay();
-      }
-      else if(a==='decimal'){
-        if(!inputStr.includes('.')) inputStr+='.';
-        updateDisplay();
-      }
-      else if(a==='swap'){
-        swapPanels();
-      }
-      else if(a==='equal'){
-        // 수식 평가
-        try {
-          let expr = inputStr
-            .replace(/×/g,'*').replace(/÷/g,'/')
-            .replace(/−/g,'-').replace(/＋/g,'+');
-          inputStr = String(Function('"use strict";return('+expr+')')());
-        } catch {
-          inputStr = '0';
+        if (a==='clear') {
+          inputStr = '';
+          updateDisplay();
+          val2.innerText = '0';
+          rateT.innerText = '조회 시간: --';
+          unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
         }
-        updateDisplay();
-        fetchAndConvert();
-      }
-      else if(k){
-        inputStr += k;
-        updateDisplay();
-      }
+        else if (a==='back') {
+          inputStr = inputStr.slice(0,-1);
+          updateDisplay();
+        }
+        else if (['divide','multiply','minus','plus'].includes(a)) {
+          inputStr += btn.textContent;
+          updateDisplay();
+        }
+        else if (a==='decimal') {
+          if (!inputStr.includes('.')) inputStr += '.';
+          updateDisplay();
+        }
+        else if (a==='swap') {
+          swapPanels();
+        }
+        else if (a==='equal') {
+          // 먼저 내부 계산
+          try {
+            const expr = inputStr
+              .replace(/×/g,'*').replace(/÷/g,'/')
+              .replace(/−/g,'-').replace(/＋/g,'+');
+            inputStr = String(Function('"use strict";return('+expr+')')());
+          } catch {
+            inputStr = '0';
+          }
+          updateDisplay();
+          fetchAndConvert();
+        }
+        else if (k) {
+          inputStr += k;
+          updateDisplay();
+        }
+      });
     });
 
-    // 설정 버튼
+    // 설정 페이지 이동
     setBtn.addEventListener('click', ()=>{
       window.open('settings.html','_blank');
     });
 
-    // 초기
+    // 초기 화면
     updateDisplay();
     fetchAndConvert();
-
   })();
   </script>
 </body>
