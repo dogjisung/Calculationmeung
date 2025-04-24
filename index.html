@@ -5,90 +5,79 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>환율계산</title>
   <style>
+    /* ================= 전체 레이아웃 ================= */
     html, body {
-      margin:0; padding:0;
-      width:100vw; height:100vh;
-      overflow:hidden;
-      background:#fff;
-      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      margin: 0; padding: 0;
+      width: 100vw;  height: 100vh;
+      overflow: hidden;          /* 스크롤 제거 */
+      background: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
-      display:flex; flex-direction:column;
-      width:100%; height:100%;
-      max-width:360px; margin:0 auto;
-      position:relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%;  height: 100%;
+      max-width: 360px;
+      margin: 0 auto;
     }
-    /* 설정(⚙️) 버튼 */
-    .settings-btn {
-      position:absolute;
-      top:8px; right:8px;
-      font-size:28px;
-      text-decoration:none;
-      color:#555;
-      z-index:10;
-    }
+
+    /* ================ 상단(숨김) ================ */
     .top {
-      flex:1; display:flex; flex-direction:column;
-      justify-content:center; border-bottom:1px solid #ddd;
-      padding-top:40px; /* 설정 버튼 공간 확보 */
+      display: none;            /* 상단 영역 완전 숨김 */
     }
-    .rate-panel {
-      display:flex; align-items:center; padding:16px;
-    }
-    .flag { font-size:32px; margin-right:12px; }
-    .code { flex:1; font-size:20px; font-weight:500; color:#555; }
-    .amount { font-size:24px; font-weight:700; }
-    .stamp {
-      text-align:center; font-size:14px; color:#888;
-      padding:4px 0;
-    }
+
+    /* ================ 키패드 영역 ================ */
     .keypad {
-      flex:4;
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      grid-template-rows:repeat(5,1fr);
-      gap:8px; padding:12px; box-sizing:border-box;
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      grid-template-rows: repeat(5,1fr);
+      gap: 8px;
+      padding: 12px;
+      box-sizing: border-box;
     }
     .keypad button {
-      border:none; border-radius:8px;
-      font-size:20px; font-weight:500; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      background:#e0e0e0;
+      border: none;
+      border-radius: 8px;
+      font-size: 20px; font-weight: 500;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: #e0e0e0;
     }
-    .keypad button[data-action="clear"]    { background:#f44336; color:#fff; }
+    .keypad button[data-action="clear"]    { background: #f44336; color: #fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="swap"],
-    .keypad button[data-action="decimal"] { background:#ccc; }
+    .keypad button[data-action="decimal"] { background: #ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"]     { background:#fbc02d; }
+    .keypad button[data-action="plus"]     { background: #fbc02d; }
     .keypad button[data-action="equal"] {
-      background:#4caf50; color:#fff;
-      grid-column:span 2; font-size:22px;
+      background: #4caf50; color: #fff;
+      grid-column: span 2;
+      font-size: 22px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 설정 화면으로 이동 -->
-    <a href="settings.html" class="settings-btn">⚙️</a>
-
+    <!-- 숨겨진 상단(스크립트용으로 남겨두되 CSS로 display:none 처리) -->
     <div class="top">
       <div class="rate-panel">
-        <span id="flag1" class="flag">🇺🇸</span>
-        <span id="code1" class="code">USD</span>
-        <span id="value1" class="amount">0</span>
+        <span id="flag1">🇺🇸</span>
+        <span id="code1">USD</span>
+        <span id="value1">0</span>
       </div>
-      <div class="rate-panel" style="border-top:1px solid #eee;">
-        <span id="flag2" class="flag">🇰🇷</span>
-        <span id="code2" class="code">KRW</span>
-        <span id="value2" class="amount">0</span>
+      <div class="rate-panel">
+        <span id="flag2">🇰🇷</span>
+        <span id="code2">KRW</span>
+        <span id="value2">0</span>
       </div>
-      <div id="rateTime" class="stamp">조회 시간: --</div>
-      <div id="unitRate" class="stamp">1 KRW = -- USD</div>
+      <div id="rateTime">조회 시간: --</div>
+      <div id="unitRate">1 KRW = -- USD</div>
     </div>
 
+    <!-- 계산기 키패드 -->
     <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -118,123 +107,99 @@
 
   <script>
   (function(){
-    // 요소 참조
-    const f1=document.getElementById('flag1'),
-          f2=document.getElementById('flag2'),
-          c1=document.getElementById('code1'),
-          c2=document.getElementById('code2'),
-          v1=document.getElementById('value1'),
-          v2=document.getElementById('value2'),
-          rt=document.getElementById('rateTime'),
-          ur=document.getElementById('unitRate'),
-          kb=document.getElementById('keypad');
+    const f1 = document.getElementById('flag1'),
+          f2 = document.getElementById('flag2'),
+          c1 = document.getElementById('code1'),
+          c2 = document.getElementById('code2'),
+          v1 = document.getElementById('value1'),
+          v2 = document.getElementById('value2'),
+          rt = document.getElementById('rateTime'),
+          ur = document.getElementById('unitRate'),
+          kb = document.getElementById('keypad');
 
-    // 국기 맵
-    const flags = {
-      USD:'🇺🇸', KRW:'🇰🇷',
-      JPY:'🇯🇵', CNY:'🇨🇳',
-      VND:'🇻🇳'
-    };
-
-    let inputStr='';
-
-    // 로컬스토리지에 설정된 통화가 있으면 덮어쓰기
-    const base = localStorage.getItem('baseCur'),
-          tgt  = localStorage.getItem('tgtCur');
-    if(base && flags[base]) {
-      c1.innerText=base; f1.innerText=flags[base];
-    }
-    if(tgt && flags[tgt]) {
-      c2.innerText=tgt; f2.innerText=flags[tgt];
-    }
+    let inputStr = '';
 
     function updateDisplay(){
-      v1.innerText = inputStr||'0';
+      v1.innerText = inputStr || '0';
     }
 
     async function fetchAndConvert(){
-      // 수식 기호 변환
+      // 1) 연산
       const expr = inputStr
-        .replace(/×/g,'*')
-        .replace(/÷/g,'/')
-        .replace(/−/g,'-')
-        .replace(/＋/g,'+');
-      let amt=0;
-      try{ amt = Function('"use strict";return('+ (expr||'0') +')')(); }
-      catch{ amt=0; }
-      if(isNaN(amt)) amt=0;
+        .replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/＋/g,'+');
+      let amt = 0;
+      try { amt = Function('"use strict";return('+ (expr||'0') +')')(); }
+      catch { amt = 0; }
+      if (isNaN(amt)) amt = 0;
 
-      const from=c1.innerText, to=c2.innerText;
-      try{
+      // 2) 통화코드
+      const from = c1.innerText, to = c2.innerText;
+
+      try {
         const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
-        if(!res.ok) throw new Error(res.status);
-        const js = await res.json();
+        if (!res.ok) throw new Error(res.status);
+        const js  = await res.json();
         const rate = js.rates[to];
-        if(typeof rate!=='number') throw new Error('환율 데이터 이상');
+        if (typeof rate !== 'number') throw new Error('환율 데이터 이상');
 
-        // 조회 시간 업데이트
-        rt.innerText = '조회 시간: '+ new Date().toLocaleString();
+        // 조회시간 (실제 호출 시각)
+        rt.innerText = '조회 시간: ' + new Date().toLocaleString();
 
-        // 단위 환율
-        const unit = to==='KRW'
-          ? Math.round(rate).toLocaleString()
-          : rate.toFixed(6).replace(/\.?0+$/,'');
-        ur.innerText = `1 ${from} = ${unit} ${to}`;
+        // 단위환율 표시
+        ur.innerText = `1 ${from} = ${ to==='KRW' ? Math.round(rate).toLocaleString() : rate.toFixed(6) } ${to}`;
 
-        // 결과 금액 (천 단위 콤마)
+        // 결과 변환
         const result = amt * rate;
-        if(to==='KRW'){
-          v2.innerText = Math.round(result).toLocaleString();
-        } else {
-          v2.innerText = parseFloat(result.toFixed(6)).toLocaleString();
-        }
-      }catch(e){
-        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+e.message);
+        // 천단위 , 표시
+        const fmt = num => num.toLocaleString(undefined, { maximumFractionDigits:6 });
+        v2.innerText = fmt(result);
+      } catch(e){
+        alert('환율 정보를 가져오는 데 실패했어요.\n오류: '+ e.message);
       }
     }
 
     function swapPanels(){
-      [f1.innerText,f2.innerText]=[f2.innerText,f1.innerText];
-      [c1.innerText,c2.innerText]=[c2.innerText,c1.innerText];
-      localStorage.setItem('baseCur', c1.innerText);
-      localStorage.setItem('tgtCur',  c2.innerText);
-      inputStr=''; updateDisplay();
-      rt.innerText='조회 시간: --';
-      ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
+      [f1.innerText,f2.innerText] = [f2.innerText,f1.innerText];
+      [c1.innerText,c2.innerText] = [c2.innerText,c1.innerText];
+      [v1.innerText,v2.innerText] = [v2.innerText,v1.innerText];
+      inputStr='';
+      updateDisplay();
+      rt.innerText = '조회 시간: --';
+      ur.innerText = `1 ${c2.innerText} = -- ${c1.innerText}`;
       fetchAndConvert();
     }
 
-    kb.addEventListener('click',e=>{
-      if(e.target.tagName!=='BUTTON') return;
-      const a=e.target.dataset.action, k=e.target.dataset.key;
-      if(a==='clear'){
+    kb.addEventListener('click', e => {
+      if (e.target.tagName!=='BUTTON') return;
+      const a = e.target.dataset.action, k = e.target.dataset.key;
+
+      if (a==='clear'){
         inputStr=''; updateDisplay();
         v2.innerText='0';
         rt.innerText='조회 시간: --';
-        ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
+        ur.innerText=`1 ${c2.innerText} = -- ${c1.innerText}`;
       }
-      else if(a==='back'){
-        inputStr=inputStr.slice(0,-1); updateDisplay();
+      else if (a==='back'){
+        inputStr = inputStr.slice(0,-1); updateDisplay();
       }
-      else if(['divide','multiply','minus','plus'].includes(a)){
-        inputStr+=e.target.textContent; updateDisplay();
+      else if (['divide','multiply','minus','plus'].includes(a)){
+        inputStr += e.target.textContent; updateDisplay();
       }
-      else if(a==='decimal'){
-        if(!inputStr.includes('.')) inputStr+='.';
+      else if (a==='decimal'){
+        if (!inputStr.includes('.')) inputStr += '.';
         updateDisplay();
       }
-      else if(a==='swap'){
+      else if (a==='swap'){
         swapPanels();
       }
-      else if(a==='equal'){
+      else if (a==='equal'){
         fetchAndConvert();
       }
-      else if(k){
-        inputStr+=k; updateDisplay();
+      else if (k){
+        inputStr += k; updateDisplay();
       }
     });
 
-    // 초기화
     updateDisplay();
     fetchAndConvert();
   })();
