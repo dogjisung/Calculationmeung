@@ -2,97 +2,109 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device‐width, initial‐scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>환율계산</title>
   <style>
-    /* ---------------------------------------------------
-       레이아웃
-    --------------------------------------------------- */
+    /* ——————————————————————————————————
+       공통 레이아웃
+    —————————————————————————————————— */
     html, body {
-      margin:0; padding:0;
-      width:100vw; height:100vh;
-      overflow:hidden;
-      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      background: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
     }
     .container {
-      position:relative;
-      width:100%; height:100%;
-      max-width:360px; margin:0 auto;
-      display:flex; flex-direction:column;
+      width: 100%;
+      max-width: 360px;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
     }
     .top {
-      position:relative;
-      padding:16px 8px 0;
-      border-bottom:1px solid #ddd;
-      flex:1;
-      box-sizing:border-box;
+      flex: 1;
+      padding: 16px 12px 0;
+      border-bottom: 1px solid #ddd;
+      position: relative;
+      box-sizing: border-box;
     }
     .settings-btn {
-      position:absolute;
-      top:16px; right:12px;
-      width:28px; height:28px;
-      background:none; border:none; cursor:pointer;
-      font-size:24px;
+      position: absolute;
+      top: 16px; right: 12px;
+      width: 28px; height: 28px;
+      border: none; background: none;
+      font-size: 24px; cursor: pointer;
     }
     .rate-panel {
-      display:flex; align-items:center;
-      padding:12px 0; border-top:1px solid #eee;
+      display: flex; align-items: center;
+      padding: 12px 0;
+      border-top: 1px solid #eee;
     }
-    .rate-panel:first-of-type { border-top:none; }
-    .flag   { font-size:32px; margin-right:12px; }
-    .code   { flex:1; font-size:20px; }
-    .amount { font-size:24px; font-weight:700; }
+    .rate-panel:first-of-type { border-top: none; }
+    .flag   { font-size: 32px; margin-right: 12px; }
+    .code   { flex: 1; font-size: 20px; color: #444; }
+    .amount { font-size: 24px; font-weight: 700; color: #000; }
     .stamp {
-      text-align:center; font-size:14px;
-      margin:4px 0;
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      margin: 4px 0;
     }
+
     .keypad {
-      flex:4;
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      grid-template-rows:repeat(5,1fr);
-      gap:8px; padding:12px;
-      box-sizing:border-box;
+      flex: 3;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 8px;
+      padding: 12px;
+      box-sizing: border-box;
     }
     .keypad button {
-      font-size:20px; border:none; border-radius:8px;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer; background:#e0e0e0; color:#000;
+      border: none; border-radius: 8px;
+      font-size: 20px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      background: #e0e0e0;
+      color: #000;
     }
-    .keypad button[data-action="clear"]    { background:#f44336; color:#fff; }
+    .keypad button[data-action="clear"]    { background: #f44336; color: #fff; }
     .keypad button[data-action="back"],
     .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"]     { background:#ccc; }
+    .keypad button[data-action="swap"]     { background: #ccc; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
-    .keypad button[data-action="plus"]     { background:#fbc02d; }
+    .keypad button[data-action="plus"]     { background: #fbc02d; }
     .keypad button[data-action="equal"] {
-      background:#4caf50; color:#fff;
-      grid-column:span 2; font-size:22px;
+      background: #4caf50; color: #fff;
+      grid-column: span 2;
+      font-size: 22px;
     }
 
-    /* ---------------------------------------------------
-       테마 정의
-    --------------------------------------------------- */
-    body.light { background:#fff; color:#000; }
-    body.dark  { background:#222; color:#ddd; }
-    body.pink  { background:#ffe4e1; color:#333; }
-    body.mint  { background:#e0f7fa; color:#004d40; }
+    /* ——————————————————————————————————
+       테마
+    —————————————————————————————————— */
+    body.light { background: #fff; color: #000; }
+    body.dark  { background: #222; color: #ddd; }
+    body.pink  { background: #ffe4e1; color: #333; }
+    body.mint  { background: #e0f7fa; color: #004d40; }
 
-    /* 다크모드에서 키패드가 보이도록 오버라이드 */
+    /* 다크 모드 키패드 버튼 가독성 보강 */
     body.dark .keypad button {
       background: #444 !important;
       color: #ddd   !important;
     }
-    body.dark .keypad button[data-action="clear"]    { background:#f44336 !important; }
-    body.dark .keypad button[data-action="equal"]    { background:#4caf50 !important; }
-    /* 연산자 버튼은 원래 색 유지 */
+    body.dark .keypad button[data-action="clear"] { background: #f44336 !important; }
+    body.dark .keypad button[data-action="equal"] { background: #4caf50 !important; }
     body.dark .keypad button[data-action="divide"],
     body.dark .keypad button[data-action="multiply"],
     body.dark .keypad button[data-action="minus"],
     body.dark .keypad button[data-action="plus"] {
-      background:#fbc02d !important; color:#000 !important;
+      background: #fbc02d !important;
+      color: #000 !important;
     }
   </style>
 </head>
@@ -140,7 +152,7 @@
 
   <script>
   (function(){
-    // 요소 캐싱
+    // DOM 요소
     const btns   = document.querySelectorAll('.keypad button');
     const flag1  = document.getElementById('flag1');
     const flag2  = document.getElementById('flag2');
@@ -152,26 +164,26 @@
     const unitR  = document.getElementById('unitRate');
     const setBtn = document.querySelector('.settings-btn');
 
-    // 테마 초기화 & 리스너
-    let theme = localStorage.getItem('theme')||'light';
+    // 테마 적용
+    let theme = localStorage.getItem('theme') || 'light';
     document.body.classList.add(theme);
     window.addEventListener('storage', e=>{
-      if (e.key==='theme') {
+      if(e.key==='theme'){
         document.body.className = '';
         document.body.classList.add(e.newValue);
       }
     });
 
-    // 입력 식
+    // 입력 저장
     let inputStr = '';
 
     function updateDisplay(){
-      const n = Number(inputStr)||0;
-      val1.innerText = n.toLocaleString();
+      const num = Number(inputStr) || 0;
+      val1.innerText = num.toLocaleString();
     }
 
     async function fetchAndConvert(){
-      // 수식 계산
+      // 식 계산
       let amt = 0;
       try {
         const expr = inputStr
@@ -179,75 +191,69 @@
           .replace(/−/g,'-').replace(/＋/g,'+');
         amt = Function('"use strict";return('+ (expr||'0') +')')();
       } catch {}
-      if (isNaN(amt)) amt = 0;
+      if(isNaN(amt)) amt = 0;
 
-      // API 호출
       const from = code1.innerText, to = code2.innerText;
       try {
         const res  = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
         const js   = await res.json();
         const rate = js.rates[to];
 
-        // 조회 시간 & 단위 환율
-        rateT.innerText = '조회 시간: '+ new Date().toLocaleString();
+        rateT.innerText = '조회 시간: ' + new Date().toLocaleString();
         unitR.innerText = `1 ${from} = ${
           to==='KRW'
             ? Math.round(rate).toLocaleString()
             : rate.toFixed(6)
         } ${to}`;
 
-        // 환산 금액 표시
         const result = amt * rate;
         val2.innerText = result.toLocaleString(undefined,{
           maximumFractionDigits: to==='KRW'?0:6
         });
       } catch(e){
-        alert('환율 호출 실패: '+ e.message);
+        alert('환율 호출 실패: ' + e.message);
       }
     }
 
-    // 패널 스왑
     function swapPanels(){
       [flag1.innerText,flag2.innerText] = [flag2.innerText,flag1.innerText];
       [code1.innerText,code2.innerText] = [code2.innerText,code1.innerText];
       [val1.innerText,val2.innerText]   = [val2.innerText,val1.innerText];
-      inputStr = '';
-      updateDisplay();
+      inputStr = ''; updateDisplay();
       rateT.innerText = '조회 시간: --';
       unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
       fetchAndConvert();
     }
 
-    // 버튼별 클릭 핸들러
+    // 각 버튼 처리
     btns.forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        const a = btn.dataset.action;
-        const k = btn.dataset.key;
+        const action = btn.dataset.action;
+        const key    = btn.dataset.key;
 
-        if (a==='clear') {
-          inputStr = '';
-          updateDisplay();
+        if(action==='clear'){
+          inputStr = ''; updateDisplay();
           val2.innerText = '0';
           rateT.innerText = '조회 시간: --';
           unitR.innerText = `1 ${code1.innerText} = -- ${code2.innerText}`;
         }
-        else if (a==='back') {
+        else if(action==='back'){
           inputStr = inputStr.slice(0,-1);
           updateDisplay();
         }
-        else if (['divide','multiply','minus','plus'].includes(a)) {
+        else if(['divide','multiply','minus','plus'].includes(action)){
           inputStr += btn.textContent;
           updateDisplay();
         }
-        else if (a==='decimal') {
-          if (!inputStr.includes('.')) inputStr += '.';
+        else if(action==='decimal'){
+          if(!inputStr.includes('.')) inputStr += '.';
           updateDisplay();
         }
-        else if (a==='swap') {
+        else if(action==='swap'){
           swapPanels();
         }
-        else if (a==='equal') {
-          // 먼저 내부 계산
+        else if(action==='equal'){
+          // 내부 식 바로 계산
           try {
             const expr = inputStr
               .replace(/×/g,'*').replace(/÷/g,'/')
@@ -259,19 +265,18 @@
           updateDisplay();
           fetchAndConvert();
         }
-        else if (k) {
-          inputStr += k;
+        else if(key){
+          inputStr += key;
           updateDisplay();
         }
       });
     });
 
-    // 설정 페이지 이동
     setBtn.addEventListener('click', ()=>{
       window.open('settings.html','_blank');
     });
 
-    // 초기 화면
+    // 초기화
     updateDisplay();
     fetchAndConvert();
   })();
