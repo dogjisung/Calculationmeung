@@ -6,18 +6,18 @@
   <title>환율계산기</title>
   <style id="theme-style"></style>
   <style>
+    /* 화면 전체 꽉 채우기 */
     html, body {
       margin: 0; padding: 0;
       width: 100vw; height: 100vh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen;
-      background: #fff;
-      color: #000;
+      background: #fff; color: #000;
     }
+    /* 컨테이너도 가로세로 모두 100% */
     .container {
       display: flex; flex-direction: column;
       width: 100%; height: 100%;
-      max-width: 360px; margin: 0 auto;
     }
     .top {
       flex: 1; padding: 16px 12px 0;
@@ -35,15 +35,16 @@
       padding: 8px 0; border-top: 1px solid #eee;
     }
     .rate-panel:first-of-type { border-top: none; }
-    .flag  { font-size: 32px; }
-    .code  { margin-left: 8px; font-size: 20px; color: #333; }
-    .amount{ font-size: 24px; font-weight: 700; }
+    .flag   { font-size: 32px; }
+    .code   { margin-left: 8px; font-size: 20px; color: #333; }
+    .amount { font-size: 24px; font-weight: 700; }
     .stamp {
       text-align: center; font-size: 14px; color: #888;
       margin: 4px 0;
     }
     .keypad {
-      flex: 4; display: grid;
+      flex: 4;
+      display: grid;
       grid-template-columns: repeat(4,1fr);
       grid-template-rows: repeat(5,1fr);
       gap: 8px; padding: 12px;
@@ -73,6 +74,7 @@
   <div class="container">
     <div class="top">
       <button class="settings-btn" onclick="location.href='settings.html'">⚙️</button>
+
       <div class="rate-panel">
         <div><span id="flag1">🇺🇸</span><span id="code1" class="code">USD</span></div>
         <div id="value1" class="amount">0</div>
@@ -84,6 +86,7 @@
       <div id="rateTime" class="stamp">조회 시간: --</div>
       <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
+
     <div class="keypad" id="keypad">
       <button data-action="clear">C</button>
       <button data-action="back">←</button>
@@ -128,38 +131,37 @@
     let inputStr = '';
 
     function applyTheme(theme) {
-      // 테마 결정: 빈 문자열이면 시스템 설정 따름
-      let t = theme || (window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
-      switch (t) {
-        case 'dark':
-          themeStyle.textContent = `
-            body { background: #121212; color: #eee; }
-            .keypad button { background: #333; color: #fff; }
-            .keypad button[data-action="divide"],
-            .keypad button[data-action="multiply"],
-            .keypad button[data-action="minus"],
-            .keypad button[data-action="plus"] { background: #f57f17; }
-            .keypad button[data-action="clear"] { background: #b71c1c; }
-            .keypad button[data-action="equal"] { background: #2e7d32; }
-          `;
-          break;
-        case 'pink':
-          themeStyle.textContent = `
-            body { background: #ffc0cb; color: #000; }
-            .keypad button { background: #ffe4e1; color: #000; }
-          `;
-          break;
-        case 'blue':
-          themeStyle.textContent = `
-            body { background: #bbdefb; color: #000; }
-            .keypad button { background: #90caf9; color: #000; }
-          `;
-          break;
-        default: // light
-          themeStyle.textContent = `
-            body { background: #fff; color: #000; }
-            .keypad button { background: #e0e0e0; color: #000; }
-          `;
+      // 시스템 기본 모드 지원
+      let t = theme || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+      if (t==='dark') {
+        themeStyle.textContent = `
+          body { background:#121212; color:#eee; }
+          .keypad button { background:#333; color:#fff; }
+          .keypad button[data-action="divide"],
+          .keypad button[data-action="multiply"],
+          .keypad button[data-action="minus"],
+          .keypad button[data-action="plus"] { background: #f57f17; }
+          .keypad button[data-action="clear"] { background: #b71c1c; }
+          .keypad button[data-action="equal"] { background: #2e7d32; }
+        `;
+      }
+      else if (t==='pink') {
+        themeStyle.textContent = `
+          body { background:#ffc0cb; color:#000; }
+          .keypad button { background:#ffe4e1; color:#000; }
+        `;
+      }
+      else if (t==='blue') {
+        themeStyle.textContent = `
+          body { background:#bbdefb; color:#000; }
+          .keypad button { background:#90caf9; color:#000; }
+        `;
+      }
+      else { // light
+        themeStyle.textContent = `
+          body { background:#fff; color:#000; }
+          .keypad button { background:#e0e0e0; color:#000; }
+        `;
       }
     }
 
@@ -176,8 +178,7 @@
           rate = parseFloat(custom);
         } else {
           const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
-          const json = await res.json();
-          rate = json.rates[to];
+          rate = (await res.json()).rates[to];
         }
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
         ur.innerText = `1 ${from} = ${
@@ -226,9 +227,11 @@
       fetchRate();
     }
 
-    window.addEventListener('storage', applySettings);
-    window.addEventListener('pageshow', applySettings);
-    window.addEventListener('load', applySettings);
+    // 뒤로가기(popstate), storage 변경, 포커스(focus) 시에도 설정 재적용
+    window.addEventListener('popstate', applySettings);
+    window.addEventListener('storage',  applySettings);
+    window.addEventListener('focus',    applySettings);
+    window.addEventListener('load',     applySettings);
   </script>
 </body>
 </html>
