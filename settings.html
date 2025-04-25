@@ -3,144 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>환율계산 설정</title>
+  <title>설정</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+      font-family: sans-serif;
       padding: 20px;
-      margin: 0;
     }
     h2 {
-      display: flex;
-      align-items: center;
+      text-align: center;
+      margin-bottom: 20px;
     }
-    .flag {
-      font-size: 22px;
-      margin-right: 6px;
+    .section {
+      margin-bottom: 30px;
     }
-    .form-group {
-      margin-bottom: 25px;
+    select, input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-top: 8px;
+    }
+    button {
+      padding: 10px 16px;
+      margin-top: 10px;
+      font-size: 16px;
     }
     label {
       font-weight: bold;
     }
-    select {
-      width: 100%;
-      font-size: 16px;
-      padding: 8px;
-    }
-    .input-group {
-      display: flex;
-      align-items: center;
-    }
-    input[type="number"] {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      padding: 12px 20px;
-      margin-right: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
-  <h2 onclick="history.back()">← 뒤로</h2>
+  <h2>설정</h2>
 
-  <div class="form-group">
-    <label>① 기본 통화</label><br/>
-    <select id="base" onchange="saveTemp()">
-    </select>
+  <div class="section">
+    <label>기본 통화</label>
+    <select id="baseSelect"></select>
   </div>
 
-  <div class="form-group">
-    <label>② 목적 통화</label><br/>
-    <select id="target" onchange="saveTemp()">
-    </select>
+  <div class="section">
+    <label>목적 통화</label>
+    <select id="targetSelect"></select>
   </div>
 
-  <div class="form-group">
-    <label>③ 테마 선택</label><br/>
-    <select id="theme" onchange="localStorage.setItem('theme', this.value)">
+  <div class="section">
+    <label>테마 설정</label>
+    <select id="themeSelect">
       <option value="">기본</option>
       <option value="dark">다크</option>
       <option value="pastel">파스텔</option>
-      <option value="mono">모노톤</option>
+      <option value="mono">모노</option>
     </select>
   </div>
 
-  <div class="form-group">
-    <label id="customRateLabel">④ 직접 환율 입력 (1 USD → KRW)</label><br/>
-    <input type="number" id="customRate" placeholder="예) 1432" />
+  <div class="section">
+    <label>직접 환율 입력</label>
+    <input type="number" id="customRate" step="0.0001" placeholder="직접 환율 입력" />
+    <button id="saveRate">저장</button>
   </div>
 
-  <button onclick="save()">저장</button>
-  <button onclick="resetAll()">초기화</button>
-
   <script>
-    const currencyData = {
-      KRW: ['🇰🇷', '대한민국 원'],
-      USD: ['🇺🇸', '미국 달러'],
-      EUR: ['🇪🇺', '유로'],
-      JPY: ['🇯🇵', '일본 엔'],
-      CNY: ['🇨🇳', '중국 위안'],
-      VND: ['🇻🇳', '베트남 동'],
-      THB: ['🇹🇭', '태국 바트'],
-      PHP: ['🇵🇭', '필리핀 페소'],
-      RUB: ['🇷🇺', '러시아 루블'],
-      HKD: ['🇭🇰', '홍콩 달러']
+    const baseSel = document.getElementById('baseSelect');
+    const targetSel = document.getElementById('targetSelect');
+    const themeSel = document.getElementById('themeSelect');
+    const customRateInput = document.getElementById('customRate');
+
+    const CURRENCIES = {
+      USD: '🇺🇸 미국 달러',
+      KRW: '🇰🇷 한국 원',
+      JPY: '🇯🇵 일본 엔',
+      CNY: '🇨🇳 중국 위안',
+      VND: '🇻🇳 베트남 동',
+      EUR: '🇪🇺 유로',
+      THB: '🇹🇭 태국 바트',
+      PHP: '🇵🇭 필리핀 페소',
+      RUB: '🇷🇺 러시아 루블',
+      HKD: '🇭🇰 홍콩 달러'
     };
 
-    const baseSel = document.getElementById('base');
-    const targetSel = document.getElementById('target');
-    const themeSel = document.getElementById('theme');
-    const rateInput = document.getElementById('customRate');
-    const label = document.getElementById('customRateLabel');
+    Object.entries(CURRENCIES).forEach(([code, label]) => {
+      baseSel.innerHTML += `<option value="${code}">${label}</option>`;
+      targetSel.innerHTML += `<option value="${code}">${label}</option>`;
+    });
 
-    for (let code in currencyData) {
-      const [flag, name] = currencyData[code];
-      const opt1 = new Option(`${flag} ${name} (${code})`, code);
-      const opt2 = new Option(`${flag} ${name} (${code})`, code);
-      baseSel.add(opt1);
-      targetSel.add(opt2);
-    }
+    // 기존 설정 적용
+    baseSel.value = localStorage.getItem('base') || 'USD';
+    targetSel.value = localStorage.getItem('target') || 'KRW';
+    themeSel.value = localStorage.getItem('theme') || '';
+    customRateInput.value = localStorage.getItem('customRate') || '';
 
-    function updateLabel() {
-      const b = baseSel.value;
-      const t = targetSel.value;
-      label.innerText = `④ 직접 환율 입력 (1 ${b} → ${t})`;
-    }
-
-    function saveTemp() {
-      updateLabel();
+    baseSel.addEventListener('change', () => {
       localStorage.setItem('base', baseSel.value);
+      updateRateLabel();
+    });
+
+    targetSel.addEventListener('change', () => {
       localStorage.setItem('target', targetSel.value);
+      updateRateLabel();
+    });
+
+    themeSel.addEventListener('change', () => {
+      localStorage.setItem('theme', themeSel.value);
+    });
+
+    document.getElementById('saveRate').addEventListener('click', () => {
+      localStorage.setItem('customRate', customRateInput.value);
+      alert('환율 저장 완료');
+    });
+
+    function updateRateLabel() {
+      const base = baseSel.value;
+      const target = targetSel.value;
+      customRateInput.placeholder = `1 ${base} = ? ${target}`;
     }
 
-    function save() {
-      localStorage.setItem('customRate', rateInput.value);
-      alert('설정 저장됨');
-    }
+    updateRateLabel();
 
-    function resetAll() {
-      localStorage.clear();
-      location.reload();
-    }
-
-    window.onload = () => {
-      const base = localStorage.getItem('base') || 'USD';
-      const target = localStorage.getItem('target') || 'KRW';
-      const theme = localStorage.getItem('theme') || '';
-      const rate = localStorage.getItem('customRate') || '';
-
-      baseSel.value = base;
-      targetSel.value = target;
-      themeSel.value = theme;
-      rateInput.value = rate;
-      updateLabel();
-    };
+    // Android 뒤로가기 버튼처럼 동작
+    window.addEventListener('popstate', () => {
+      location.href = 'index.html';
+    });
   </script>
 </body>
 </html>
