@@ -5,79 +5,137 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>환율계산 설정</title>
   <style>
-    body{margin:0;padding:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;background:#f9f9f9;}
-    .back{cursor:pointer;font-size:24px;margin-bottom:24px;display:inline-block;}
-    .section{margin-bottom:32px;}
-    label{display:block;margin-bottom:8px;font-weight:500;}
-    select,input{width:100%;padding:8px;font-size:16px;box-sizing:border-box;margin-bottom:8px;}
-    button{margin-right:12px;padding:8px 16px;font-size:16px;cursor:pointer;}
+    body {
+      margin:0; padding:16px;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
+      background:#f9f9f9; color:#222;
+    }
+    .back {
+      cursor:pointer; font-size:24px; display:inline-block;
+      margin-bottom:24px;
+    }
+    .section { margin-bottom:32px; }
+    .section h2 {
+      margin:0 0 8px; font-size:18px;
+    }
+    .list {
+      list-style:none; padding:0; margin:0;
+      border:1px solid #ddd; border-radius:8px;
+      background:#fff;
+    }
+    .list li {
+      display:flex; align-items:center;
+      padding:12px 16px; cursor:pointer;
+      border-bottom:1px solid #eee;
+    }
+    .list li:last-child { border-bottom:none; }
+    .list li .flag { font-size:24px; width:32px; }
+    .list li .code { flex:1; margin-left:8px; }
+    .list li .radio {
+      width:20px; height:20px; border:1px solid #888;
+      border-radius:50%; margin-left:12px;
+      position:relative;
+    }
+    .list li.selected .radio::before {
+      content:'';
+      position:absolute; top:4px; left:4px;
+      width:8px; height:8px;
+      border-radius:50%; background:#2196f3;
+    }
+    .controls {
+      text-align:right;
+    }
+    .controls button {
+      padding:8px 16px; margin-left:8px;
+      font-size:16px; cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <div class="back" onclick="history.back()">← 뒤로</div>
 
   <div class="section">
-    <label>① 기본 통화</label>
-    <select id="baseSel"></select>
+    <h2>① 기본 통화 설정</h2>
+    <ul id="baseList" class="list"></ul>
   </div>
   <div class="section">
-    <label>② 목적 통화</label>
-    <select id="tgtSel"></select>
+    <h2>② 목적 통화 설정</h2>
+    <ul id="tgtList" class="list"></ul>
   </div>
   <div class="section">
-    <label>③ 테마 선택</label>
-    <select id="themeSel">
-      <option value="">기본</option>
-      <option value="dark">다크</option>
-      <option value="pastel">파스텔</option>
-      <option value="mono">모노</option>
-    </select>
+    <h2>③ 테마 선택</h2>
+    <ul id="themeList" class="list">
+      <li data-theme=""   class=""><span class="code">기본</span><div class="radio"></div></li>
+      <li data-theme="dark" class=""><span class="code">다크</span><div class="radio"></div></li>
+      <li data-theme="pastel" class=""><span class="code">파스텔</span><div class="radio"></div></li>
+      <li data-theme="mono"   class=""><span class="code">모노</span><div class="radio"></div></li>
+    </ul>
   </div>
-  <div class="section">
-    <label>④ 직접 환율 입력 (1 USD → KRW)</label>
-    <input id="customRate" type="number" step="0.000001" placeholder="예) 1422"/>
-    <button id="saveRate">저장</button>
-    <button id="clearRate">초기화</button>
+  <div class="controls">
+    <button id="saveBtn">저장</button>
+    <button id="cancelBtn" onclick="history.back()">취소</button>
   </div>
 
   <script>
-    const CODES = ['KRW','USD','EUR','JPY','CNY','VND','THB','PHP','RUB','HKD'];
-    const baseSel = document.getElementById('baseSel'),
-          tgtSel  = document.getElementById('tgtSel'),
-          themeSel= document.getElementById('themeSel'),
-          customIn= document.getElementById('customRate');
+    const FLAGS = {
+      KRW:'🇰🇷', USD:'🇺🇸', EUR:'🇪🇺', JPY:'🇯🇵',
+      CNY:'🇨🇳', VND:'🇻🇳', THB:'🇹🇭', PHP:'🇵🇭',
+      RUB:'🇷🇺', HKD:'🇭🇰'
+    };
+    const CODES = Object.keys(FLAGS);
+    const baseList = document.getElementById('baseList'),
+          tgtList  = document.getElementById('tgtList'),
+          themeList= document.getElementById('themeList'),
+          saveBtn  = document.getElementById('saveBtn');
 
-    // 로컬스토리지 값
-    const BASE = localStorage.getItem('base')   || 'USD';
-    const TGT  = localStorage.getItem('target') || 'KRW';
-    const TH   = localStorage.getItem('theme')  || '';
-    const CR   = localStorage.getItem('customRate')||'';
+    const STORAGE = {
+      base: localStorage.getItem('base')   || 'USD',
+      target:localStorage.getItem('target')|| 'KRW',
+      theme: localStorage.getItem('theme') || ''
+    };
 
-    // 통화 목록 채우기
-    CODES.forEach(c=>{
-      [baseSel,tgtSel].forEach(sel=>{
-        const opt = new Option(c,c);
-        sel.add(opt);
+    function makeList(container, key){
+      CODES.forEach(code=>{
+        const li = document.createElement('li');
+        li.dataset.code = code;
+        li.innerHTML = `<span class="flag">${FLAGS[code]}</span>
+                        <span class="code">${code}</span>
+                        <div class="radio"></div>`;
+        li.addEventListener('click',()=>{
+          // 선택표시
+          container.querySelectorAll('li').forEach(x=>x.classList.remove('selected'));
+          li.classList.add('selected');
+        });
+        container.appendChild(li);
+      });
+      // 초기 선택
+      container.querySelector(`li[data-code="${STORAGE[key]}"]`)
+               .classList.add('selected');
+    }
+
+    // 테마 리스트 선택 처리
+    themeList.querySelectorAll('li').forEach(li=>{
+      if(li.dataset.theme===STORAGE.theme) li.classList.add('selected');
+      li.addEventListener('click',()=>{
+        themeList.querySelectorAll('li').forEach(x=>x.classList.remove('selected'));
+        li.classList.add('selected');
       });
     });
-    baseSel.value=BASE;
-    tgtSel.value =TGT;
-    themeSel.value=TH;
-    customIn.value=CR;
 
-    document.getElementById('saveRate').onclick = ()=>{
-      localStorage.setItem('base', baseSel.value);
-      localStorage.setItem('target', tgtSel.value);
-      localStorage.setItem('theme', themeSel.value);
-      if(customIn.value) localStorage.setItem('customRate', customIn.value);
+    // 기본/목적 리스트 생성
+    makeList(baseList, 'base');
+    makeList(tgtList,  'target');
+
+    saveBtn.addEventListener('click',()=>{
+      const selBase = baseList.querySelector('li.selected').dataset.code;
+      const selTgt  = tgtList.querySelector('li.selected').dataset.code;
+      const selTheme= themeList.querySelector('li.selected').dataset.theme;
+      localStorage.setItem('base', selBase);
+      localStorage.setItem('target', selTgt);
+      localStorage.setItem('theme', selTheme);
       alert('설정이 저장되었습니다.');
       history.back();
-    };
-    document.getElementById('clearRate').onclick = ()=>{
-      localStorage.removeItem('customRate');
-      customIn.value='';
-      alert('사용자 환율 설정이 초기화되었습니다.');
-    };
+    });
   </script>
 </body>
 </html>
