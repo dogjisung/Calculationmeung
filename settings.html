@@ -49,6 +49,15 @@
       margin-bottom: 6px;
       display: block;
     }
+    .select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .flag {
+      font-size: 20px;
+      width: 32px;
+    }
   </style>
 </head>
 <body>
@@ -56,34 +65,40 @@
 
   <div class="section">
     <label for="base">① 기본 통화</label>
-    <select id="base">
-      <option value="KRW">KRW</option>
-      <option value="USD">USD</option>
-      <option value="EUR">EUR</option>
-      <option value="JPY">JPY</option>
-      <option value="CNY">CNY</option>
-      <option value="VND">VND</option>
-      <option value="THB">THB</option>
-      <option value="PHP">PHP</option>
-      <option value="RUB">RUB</option>
-      <option value="HKD">HKD</option>
-    </select>
+    <div class="select-wrapper">
+      <div id="flagBase" class="flag">🇺🇸</div>
+      <select id="base">
+        <option value="KRW">KRW</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+        <option value="VND">VND</option>
+        <option value="THB">THB</option>
+        <option value="PHP">PHP</option>
+        <option value="RUB">RUB</option>
+        <option value="HKD">HKD</option>
+      </select>
+    </div>
   </div>
 
   <div class="section">
     <label for="target">② 목적 통화</label>
-    <select id="target">
-      <option value="KRW">KRW</option>
-      <option value="USD">USD</option>
-      <option value="EUR">EUR</option>
-      <option value="JPY">JPY</option>
-      <option value="CNY">CNY</option>
-      <option value="VND">VND</option>
-      <option value="THB">THB</option>
-      <option value="PHP">PHP</option>
-      <option value="RUB">RUB</option>
-      <option value="HKD">HKD</option>
-    </select>
+    <div class="select-wrapper">
+      <div id="flagTarget" class="flag">🇰🇷</div>
+      <select id="target">
+        <option value="KRW">KRW</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="JPY">JPY</option>
+        <option value="CNY">CNY</option>
+        <option value="VND">VND</option>
+        <option value="THB">THB</option>
+        <option value="PHP">PHP</option>
+        <option value="RUB">RUB</option>
+        <option value="HKD">HKD</option>
+      </select>
+    </div>
   </div>
 
   <div class="section">
@@ -111,11 +126,31 @@
     const themeSelect = document.getElementById('theme');
     const rateLabel = document.getElementById('rateLabel');
     const customRateInput = document.getElementById('customRate');
+    const flagBase = document.getElementById('flagBase');
+    const flagTarget = document.getElementById('flagTarget');
+
+    const FLAGS = {
+      KRW: '🇰🇷',
+      USD: '🇺🇸',
+      EUR: '🇪🇺',
+      JPY: '🇯🇵',
+      CNY: '🇨🇳',
+      VND: '🇻🇳',
+      THB: '🇹🇭',
+      PHP: '🇵🇭',
+      RUB: '🇷🇺',
+      HKD: '🇭🇰'
+    };
 
     function updateRateLabel() {
       const base = baseSelect.value;
       const target = targetSelect.value;
       rateLabel.innerText = `④ 직접 환율 입력 (1 ${base} → ${target})`;
+    }
+
+    function updateFlags() {
+      flagBase.innerText = FLAGS[baseSelect.value] || '';
+      flagTarget.innerText = FLAGS[targetSelect.value] || '';
     }
 
     function saveCustomRate() {
@@ -137,16 +172,19 @@
       targetSelect.value = localStorage.getItem('target') || 'KRW';
       themeSelect.value = localStorage.getItem('theme') || '';
       updateRateLabel();
+      updateFlags();
     }
 
     baseSelect.addEventListener('change', () => {
       localStorage.setItem('base', baseSelect.value);
       updateRateLabel();
+      updateFlags();
     });
 
     targetSelect.addEventListener('change', () => {
       localStorage.setItem('target', targetSelect.value);
       updateRateLabel();
+      updateFlags();
     });
 
     themeSelect.addEventListener('change', () => {
