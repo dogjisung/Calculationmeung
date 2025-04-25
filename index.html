@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>환율계산</title>
   <style id="theme-style"></style>
   <style>
@@ -11,88 +11,102 @@
       width: 100vw; height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
       background: #fff;
-      color: #000;
+      display: flex; flex-direction: column;
     }
     .container {
-      max-width: 400px;
-      margin: 0 auto;
-      padding: 12px;
+      flex: 1;
       display: flex;
       flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
     }
     .top {
+      padding: 10px 16px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 4px;
     }
     .settings-btn {
-      font-size: 22px;
+      font-size: 24px;
       background: none;
       border: none;
       cursor: pointer;
     }
-    .rate-panel {
-      display: flex; align-items: center;
-      padding: 6px 0;
-      font-size: 20px;
+    .panel {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px;
+      font-size: 18px;
     }
-    .flag { font-size: 28px; margin-right: 8px; }
-    .code { flex: 1; font-weight: 600; }
-    .amount { font-size: 22px; font-weight: bold; }
+    .flag {
+      font-size: 24px;
+      margin-right: 8px;
+    }
+    .code {
+      font-weight: 600;
+      flex: 1;
+    }
+    .amount {
+      font-size: 22px;
+      font-weight: bold;
+    }
     .stamp {
       text-align: center;
       font-size: 14px;
       color: gray;
     }
     .keypad {
+      flex: 1;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-top: 16px;
+      grid-template-rows: repeat(5, 1fr);
+      gap: 2px;
+      padding: 4px;
+      box-sizing: border-box;
     }
     .keypad button {
       font-size: 20px;
       border: none;
-      border-radius: 8px;
-      padding: 18px 0;
+      border-radius: 0;
       background: #e0e0e0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       cursor: pointer;
     }
     .keypad button[data-action="clear"]    { background: #f44336; color: white; }
+    .keypad button[data-action="swap"],
     .keypad button[data-action="back"],
-    .keypad button[data-action="decimal"],
-    .keypad button[data-action="swap"]     { background: #ccc; }
+    .keypad button[data-action="decimal"]  { background: #bdbdbd; }
     .keypad button[data-action="divide"],
     .keypad button[data-action="multiply"],
     .keypad button[data-action="minus"],
     .keypad button[data-action="plus"]     { background: #fbc02d; }
-    .keypad button[data-action="equal"] {
+    .keypad button[data-action="equal"]    {
       background: #4caf50;
       color: white;
       grid-column: span 2;
-      font-size: 22px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="top">
-      <div style="font-size: 22px; font-weight: bold;">환율계산</div>
+      <div style="font-size: 20px; font-weight: bold;">환율계산</div>
       <button class="settings-btn" onclick="location.href='settings.html'">⚙️</button>
     </div>
-
-    <div class="rate-panel">
-      <span class="flag" id="flag1">🇺🇸</span>
-      <span class="code" id="code1">USD</span>
-      <span class="amount" id="value1">0</span>
+    <div class="panel">
+      <span id="flag1" class="flag">🇺🇸</span>
+      <span id="code1" class="code">USD</span>
+      <span id="value1" class="amount">0</span>
     </div>
-    <div class="rate-panel">
-      <span class="flag" id="flag2">🇰🇷</span>
-      <span class="code" id="code2">KRW</span>
-      <span class="amount" id="value2">0</span>
+    <div class="panel">
+      <span id="flag2" class="flag">🇰🇷</span>
+      <span id="code2" class="code">KRW</span>
+      <span id="value2" class="amount">0</span>
     </div>
-
     <div class="stamp" id="rateTime">조회 시간: --</div>
     <div class="stamp" id="unitRate">1 USD = -- KRW</div>
 
@@ -120,6 +134,12 @@
   </div>
 
   <script>
+    const FLAGS = {
+      USD:'🇺🇸', KRW:'🇰🇷', EUR:'🇪🇺', JPY:'🇯🇵',
+      CNY:'🇨🇳', VND:'🇻🇳', THB:'🇹🇭', PHP:'🇵🇭',
+      RUB:'🇷🇺', HKD:'🇭🇰'
+    };
+
     const f1 = document.getElementById('flag1'),
           f2 = document.getElementById('flag2'),
           c1 = document.getElementById('code1'),
@@ -130,33 +150,27 @@
           ur = document.getElementById('unitRate'),
           kb = document.getElementById('keypad');
 
-    const FLAGS = {
-      USD:'🇺🇸', KRW:'🇰🇷', EUR:'🇪🇺', JPY:'🇯🇵',
-      CNY:'🇨🇳', VND:'🇻🇳', THB:'🇹🇭', PHP:'🇵🇭',
-      RUB:'🇷🇺', HKD:'🇭🇰'
-    };
-
     let inputStr = '';
 
     function applyTheme(theme) {
       const style = document.getElementById('theme-style');
       if (theme === 'dark') {
         style.innerHTML = `
-          body { background: #121212; color: #fff; }
+          body { background: #111; color: white; }
           .keypad button { background: #333; color: white; }
         `;
       } else if (theme === 'pastel') {
         style.innerHTML = `
-          body { background: #fff0f5; color: #333; }
-          .keypad button { background: #ffe0e0; }
+          body { background: #fff0f5; }
+          .keypad button { background: #ffd6e0; }
         `;
       } else if (theme === 'mono') {
         style.innerHTML = `
-          body { background: #f4f4f4; color: #111; }
-          .keypad button { background: #ccc; color: #000; }
+          body { background: #eee; color: #111; }
+          .keypad button { background: #ccc; color: black; }
         `;
       } else {
-        style.innerHTML = '';
+        style.innerHTML = ``;
       }
     }
 
@@ -166,12 +180,12 @@
 
     async function fetchRate() {
       const from = c1.innerText, to = c2.innerText;
-      const customRate = localStorage.getItem('customRate');
+      const custom = localStorage.getItem('customRate');
       let rate;
 
       try {
-        if (customRate && from === 'USD' && to === 'KRW') {
-          rate = parseFloat(customRate);
+        if (custom && from === 'USD' && to === 'KRW') {
+          rate = parseFloat(custom);
         } else {
           const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
           const json = await res.json();
@@ -188,7 +202,7 @@
           maximumFractionDigits: to === 'KRW' ? 0 : 6
         });
       } catch (e) {
-        alert('환율 정보 오류: ' + e.message);
+        alert('환율 오류: ' + e.message);
       }
     }
 
@@ -197,8 +211,7 @@
       const a = e.target.dataset.action, k = e.target.dataset.key;
 
       if (a === 'clear') {
-        inputStr = '';
-        v2.innerText = '0';
+        inputStr = ''; v2.innerText = '0';
         rt.innerText = '조회 시간: --';
         ur.innerText = `1 ${c1.innerText} = -- ${c2.innerText}`;
       } else if (a === 'back') {
@@ -207,8 +220,7 @@
         [c1.innerText, c2.innerText] = [c2.innerText, c1.innerText];
         [f1.innerText, f2.innerText] = [f2.innerText, f1.innerText];
         inputStr = '';
-        updateDisplay();
-        fetchRate();
+        updateDisplay(); fetchRate();
       } else if (a === 'equal') {
         fetchRate();
       } else if (a) {
