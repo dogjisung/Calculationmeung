@@ -1,157 +1,146 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>환율계산 설정</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
-      margin: 0; padding: 20px;
+      padding: 20px;
+      margin: 0;
     }
     h2 {
-      font-size: 20px;
-      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+    }
+    .flag {
+      font-size: 22px;
+      margin-right: 6px;
+    }
+    .form-group {
+      margin-bottom: 25px;
+    }
+    label {
+      font-weight: bold;
     }
     select {
       width: 100%;
       font-size: 16px;
       padding: 8px;
-      margin-bottom: 20px;
     }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
-    }
-    .row {
+    .input-group {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
     }
-    .row img {
-      width: 24px;
-      height: 18px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
+    input[type="number"] {
+      flex: 1;
+      padding: 10px;
       font-size: 16px;
     }
     button {
-      padding: 10px 20px;
+      padding: 12px 20px;
+      margin-right: 10px;
       font-size: 16px;
-      margin: 10px 5px 0 0;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h2 onclick="location.href='index.html'" style="cursor:pointer">← 뒤로</h2>
+  <h2 onclick="history.back()">← 뒤로</h2>
 
-  <div class="row">
-    <label>① 기본 통화</label>
-  </div>
-  <div class="row">
-    <img id="flag1" src="https://flagcdn.com/us.svg" />
-    <select id="baseCurrency"></select>
-  </div>
-
-  <div class="row">
-    <label>② 목적 통화</label>
-  </div>
-  <div class="row">
-    <img id="flag2" src="https://flagcdn.com/kr.svg" />
-    <select id="targetCurrency"></select>
-  </div>
-
-  <div class="row">
-    <label>③ 테마 선택</label>
-    <select id="theme">
-      <option value="">기본</option>
-      <option value="dark">다크</option>
-      <option value="pastel">파스텔</option>
-      <option value="mono">모노</option>
+  <div class="form-group">
+    <label>① 기본 통화</label><br/>
+    <select id="base" onchange="saveTemp()">
     </select>
   </div>
 
-  <div class="row">
-    <label id="rateLabel">④ 직접 환율 입력 (1 USD → KRW)</label>
+  <div class="form-group">
+    <label>② 목적 통화</label><br/>
+    <select id="target" onchange="saveTemp()">
+    </select>
   </div>
-  <input type="text" id="customRate" placeholder="예) 1432" />
 
-  <div>
-    <button onclick="save()">저장</button>
-    <button onclick="reset()">초기화</button>
+  <div class="form-group">
+    <label>③ 테마 선택</label><br/>
+    <select id="theme" onchange="localStorage.setItem('theme', this.value)">
+      <option value="">기본</option>
+      <option value="dark">다크</option>
+      <option value="pastel">파스텔</option>
+      <option value="mono">모노톤</option>
+    </select>
   </div>
+
+  <div class="form-group">
+    <label id="customRateLabel">④ 직접 환율 입력 (1 USD → KRW)</label><br/>
+    <input type="number" id="customRate" placeholder="예) 1432" />
+  </div>
+
+  <button onclick="save()">저장</button>
+  <button onclick="resetAll()">초기화</button>
 
   <script>
-    const currencies = {
-      KRW: "🇰🇷",
-      USD: "🇺🇸",
-      EUR: "🇪🇺",
-      JPY: "🇯🇵",
-      CNY: "🇨🇳",
-      VND: "🇻🇳",
-      THB: "🇹🇭",
-      PHP: "🇵🇭",
-      RUB: "🇷🇺",
-      HKD: "🇭🇰",
+    const currencyData = {
+      KRW: ['🇰🇷', '대한민국 원'],
+      USD: ['🇺🇸', '미국 달러'],
+      EUR: ['🇪🇺', '유로'],
+      JPY: ['🇯🇵', '일본 엔'],
+      CNY: ['🇨🇳', '중국 위안'],
+      VND: ['🇻🇳', '베트남 동'],
+      THB: ['🇹🇭', '태국 바트'],
+      PHP: ['🇵🇭', '필리핀 페소'],
+      RUB: ['🇷🇺', '러시아 루블'],
+      HKD: ['🇭🇰', '홍콩 달러']
     };
 
-    const baseSelect = document.getElementById("baseCurrency");
-    const targetSelect = document.getElementById("targetCurrency");
-    const themeSelect = document.getElementById("theme");
-    const flag1 = document.getElementById("flag1");
-    const flag2 = document.getElementById("flag2");
-    const rateLabel = document.getElementById("rateLabel");
-    const customRateInput = document.getElementById("customRate");
+    const baseSel = document.getElementById('base');
+    const targetSel = document.getElementById('target');
+    const themeSel = document.getElementById('theme');
+    const rateInput = document.getElementById('customRate');
+    const label = document.getElementById('customRateLabel');
 
-    for (const code in currencies) {
-      const option1 = new Option(code, code);
-      const option2 = new Option(code, code);
-      baseSelect.add(option1);
-      targetSelect.add(option2);
+    for (let code in currencyData) {
+      const [flag, name] = currencyData[code];
+      const opt1 = new Option(`${flag} ${name} (${code})`, code);
+      const opt2 = new Option(`${flag} ${name} (${code})`, code);
+      baseSel.add(opt1);
+      targetSel.add(opt2);
     }
 
-    function updateFlagsAndLabel() {
-      flag1.src = `https://flagcdn.com/${baseSelect.value.slice(0, 2).toLowerCase()}.svg`;
-      flag2.src = `https://flagcdn.com/${targetSelect.value.slice(0, 2).toLowerCase()}.svg`;
-      rateLabel.innerText = `④ 직접 환율 입력 (1 ${baseSelect.value} → ${targetSelect.value})`;
+    function updateLabel() {
+      const b = baseSel.value;
+      const t = targetSel.value;
+      label.innerText = `④ 직접 환율 입력 (1 ${b} → ${t})`;
+    }
+
+    function saveTemp() {
+      updateLabel();
+      localStorage.setItem('base', baseSel.value);
+      localStorage.setItem('target', targetSel.value);
     }
 
     function save() {
-      localStorage.setItem("base", baseSelect.value);
-      localStorage.setItem("target", targetSelect.value);
-      localStorage.setItem("theme", themeSelect.value);
-      localStorage.setItem("customRate", customRateInput.value);
-      alert("설정이 저장되었습니다.");
+      localStorage.setItem('customRate', rateInput.value);
+      alert('설정 저장됨');
     }
 
-    function reset() {
-      localStorage.removeItem("base");
-      localStorage.removeItem("target");
-      localStorage.removeItem("theme");
-      localStorage.removeItem("customRate");
+    function resetAll() {
+      localStorage.clear();
       location.reload();
     }
 
-    function load() {
-      baseSelect.value = localStorage.getItem("base") || "USD";
-      targetSelect.value = localStorage.getItem("target") || "KRW";
-      themeSelect.value = localStorage.getItem("theme") || "";
-      customRateInput.value = localStorage.getItem("customRate") || "";
-      updateFlagsAndLabel();
-    }
+    window.onload = () => {
+      const base = localStorage.getItem('base') || 'USD';
+      const target = localStorage.getItem('target') || 'KRW';
+      const theme = localStorage.getItem('theme') || '';
+      const rate = localStorage.getItem('customRate') || '';
 
-    baseSelect.addEventListener("change", updateFlagsAndLabel);
-    targetSelect.addEventListener("change", updateFlagsAndLabel);
-
-    window.addEventListener("load", load);
-    window.addEventListener("popstate", () => {
-      location.href = "index.html";
-    });
-    history.pushState(null, null, location.href);
+      baseSel.value = base;
+      targetSel.value = target;
+      themeSel.value = theme;
+      rateInput.value = rate;
+      updateLabel();
+    };
   </script>
 </body>
 </html>
