@@ -1,60 +1,240 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>환율계산</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="https://emojicdn.elk.sh/💱" />
+  <style id="theme-style"></style>
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+      background: #fff;
+      color: #000;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .settings-btn {
+      font-size: 22px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    .rate-panel {
+      display: flex; align-items: center;
+      padding: 6px 0;
+      font-size: 20px;
+    }
+    .flag { font-size: 28px; margin-right: 8px; }
+    .code { flex: 1; font-weight: 600; }
+    .amount { font-size: 22px; font-weight: bold; }
+    .stamp {
+      text-align: center;
+      font-size: 14px;
+      color: gray;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .keypad button {
+      font-size: 20px;
+      border: none;
+      border-radius: 8px;
+      padding: 18px 0;
+      background: #e0e0e0;
+      cursor: pointer;
+    }
+    .keypad button[data-action="clear"]    { background: #f44336; color: white; }
+    .keypad button[data-action="back"],
+    .keypad button[data-action="decimal"],
+    .keypad button[data-action="swap"]     { background: #ccc; }
+    .keypad button[data-action="divide"],
+    .keypad button[data-action="multiply"],
+    .keypad button[data-action="minus"],
+    .keypad button[data-action="plus"]     { background: #fbc02d; }
+    .keypad button[data-action="equal"] {
+      background: #4caf50;
+      color: white;
+      grid-column: span 2;
+      font-size: 22px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>환율계산</h1>
-      <button id="settingsBtn" title="설정">⚙️</button>
-    </header>
-    <main>
-      <div class="rate-row">
-        <span id="flag1">🇺🇸</span>
-        <span id="code1">USD</span>
-        <span id="amount1">0</span>
-      </div>
-      <div class="rate-row">
-        <span id="flag2">🇰🇷</span>
-        <span id="code2">KRW</span>
-        <span id="amount2">0</span>
-      </div>
-      <p class="timestamp" id="timestamp">조회 시간: --</p>
-      <p class="rate" id="rateInfo">1 USD = -- KRW</p>
+    <div class="top">
+      <div style="font-size: 22px; font-weight: bold;">환율계산</div>
+      <button class="settings-btn" onclick="location.href='settings.html'">⚙️</button>
+    </div>
 
-      <div class="keypad">
-        <button data-action="clear">C</button>
-        <button data-action="back">←</button>
-        <button data-action="swap">🔄</button>
-        <button data-action="divide">÷</button>
+    <div class="rate-panel">
+      <span class="flag" id="flag1">🇺🇸</span>
+      <span class="code" id="code1">USD</span>
+      <span class="amount" id="value1">0</span>
+    </div>
+    <div class="rate-panel">
+      <span class="flag" id="flag2">🇰🇷</span>
+      <span class="code" id="code2">KRW</span>
+      <span class="amount" id="value2">0</span>
+    </div>
 
-        <button data-key="7">7</button>
-        <button data-key="8">8</button>
-        <button data-key="9">9</button>
-        <button data-action="multiply">×</button>
+    <div class="stamp" id="rateTime">조회 시간: --</div>
+    <div class="stamp" id="unitRate">1 USD = -- KRW</div>
 
-        <button data-key="4">4</button>
-        <button data-key="5">5</button>
-        <button data-key="6">6</button>
-        <button data-action="minus">−</button>
-
-        <button data-key="1">1</button>
-        <button data-key="2">2</button>
-        <button data-key="3">3</button>
-        <button data-action="plus">＋</button>
-
-        <button data-key="0">0</button>
-        <button data-action="decimal">.</button>
-        <button class="equal" data-action="equal" colspan="2">＝</button>
-      </div>
-    </main>
+    <div class="keypad" id="keypad">
+      <button data-action="clear">C</button>
+      <button data-action="back">←</button>
+      <button data-action="swap">🔄</button>
+      <button data-action="divide">÷</button>
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button data-action="multiply">×</button>
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button data-action="minus">−</button>
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button data-action="plus">＋</button>
+      <button data-key="0">0</button>
+      <button data-action="decimal">.</button>
+      <button data-action="equal">＝</button>
+    </div>
   </div>
 
-  <script src="index.js"></script>
+  <script>
+    const f1 = document.getElementById('flag1'),
+          f2 = document.getElementById('flag2'),
+          c1 = document.getElementById('code1'),
+          c2 = document.getElementById('code2'),
+          v1 = document.getElementById('value1'),
+          v2 = document.getElementById('value2'),
+          rt = document.getElementById('rateTime'),
+          ur = document.getElementById('unitRate'),
+          kb = document.getElementById('keypad');
+
+    const FLAGS = {
+      USD:'🇺🇸', KRW:'🇰🇷', EUR:'🇪🇺', JPY:'🇯🇵',
+      CNY:'🇨🇳', VND:'🇻🇳', THB:'🇹🇭', PHP:'🇵🇭',
+      RUB:'🇷🇺', HKD:'🇭🇰'
+    };
+
+    let inputStr = '';
+
+    function applyTheme(theme) {
+      const style = document.getElementById('theme-style');
+      if (theme === 'dark') {
+        style.innerHTML = `
+          body { background: #121212; color: #fff; }
+          .keypad button { background: #333; color: white; }
+        `;
+      } else if (theme === 'pastel') {
+        style.innerHTML = `
+          body { background: #fff0f5; color: #333; }
+          .keypad button { background: #ffe0e0; }
+        `;
+      } else if (theme === 'mono') {
+        style.innerHTML = `
+          body { background: #f4f4f4; color: #111; }
+          .keypad button { background: #ccc; color: #000; }
+        `;
+      } else {
+        style.innerHTML = '';
+      }
+    }
+
+    function updateDisplay() {
+      v1.innerText = Number(inputStr || '0').toLocaleString();
+    }
+
+    async function fetchRate() {
+      const from = c1.innerText, to = c2.innerText;
+      const customRate = localStorage.getItem('customRate');
+      let rate;
+
+      try {
+        if (customRate && from === 'USD' && to === 'KRW') {
+          rate = parseFloat(customRate);
+        } else {
+          const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+          const json = await res.json();
+          rate = json.rates[to];
+        }
+
+        rt.innerText = '조회 시간: ' + new Date().toLocaleString();
+        ur.innerText = `1 ${from} = ${
+          to === 'KRW' ? Math.round(rate).toLocaleString() : rate.toFixed(6)
+        } ${to}`;
+
+        const amount = parseFloat(eval(inputStr.replace(/[＋×÷−]/g, m => ({'＋':'+','×':'*','÷':'/','−':'-'}[m])))) || 0;
+        v2.innerText = (amount * rate).toLocaleString(undefined, {
+          maximumFractionDigits: to === 'KRW' ? 0 : 6
+        });
+      } catch (e) {
+        alert('환율 정보 오류: ' + e.message);
+      }
+    }
+
+    kb.addEventListener('click', e => {
+      if (e.target.tagName !== 'BUTTON') return;
+      const a = e.target.dataset.action, k = e.target.dataset.key;
+
+      if (a === 'clear') {
+        inputStr = '';
+        v2.innerText = '0';
+        rt.innerText = '조회 시간: --';
+        ur.innerText = `1 ${c1.innerText} = -- ${c2.innerText}`;
+      } else if (a === 'back') {
+        inputStr = inputStr.slice(0, -1);
+      } else if (a === 'swap') {
+        [c1.innerText, c2.innerText] = [c2.innerText, c1.innerText];
+        [f1.innerText, f2.innerText] = [f2.innerText, f1.innerText];
+        inputStr = '';
+        updateDisplay();
+        fetchRate();
+      } else if (a === 'equal') {
+        fetchRate();
+      } else if (a) {
+        inputStr += e.target.textContent;
+      } else if (k) {
+        inputStr += k;
+      }
+
+      updateDisplay();
+    });
+
+    function applySettings() {
+      const base = localStorage.getItem('base') || 'USD';
+      const target = localStorage.getItem('target') || 'KRW';
+      const theme = localStorage.getItem('theme') || '';
+      c1.innerText = base;
+      c2.innerText = target;
+      f1.innerText = FLAGS[base] || '';
+      f2.innerText = FLAGS[target] || '';
+      applyTheme(theme);
+      updateDisplay();
+      fetchRate();
+    }
+
+    window.addEventListener('pageshow', applySettings);
+    window.addEventListener('load', applySettings);
+  </script>
 </body>
 </html>
