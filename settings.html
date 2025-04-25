@@ -2,78 +2,71 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>환율계산 설정</title>
   <style>
     body {
-      margin:0; padding:16px;
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;
-      background:#f9f9f9; color:#222;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+      margin: 0; padding: 20px;
+      background: #fdfdfd; color: #111;
     }
-    .back {
-      cursor:pointer; font-size:24px; display:inline-block;
-      margin-bottom:24px;
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
     }
-    .section { margin-bottom:32px; }
-    .section h2 {
-      margin:0 0 8px; font-size:18px;
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: bold;
     }
-    .list {
-      list-style:none; padding:0; margin:0;
-      border:1px solid #ddd; border-radius:8px;
-      background:#fff;
+    select, input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 16px;
     }
-    .list li {
-      display:flex; align-items:center;
-      padding:12px 16px; cursor:pointer;
-      border-bottom:1px solid #eee;
+    button {
+      padding: 10px 16px;
+      font-size: 16px;
+      margin-right: 10px;
     }
-    .list li:last-child { border-bottom:none; }
-    .list li .flag { font-size:24px; width:32px; }
-    .list li .code { flex:1; margin-left:8px; }
-    .list li .radio {
-      width:20px; height:20px; border:1px solid #888;
-      border-radius:50%; margin-left:12px;
-      position:relative;
+    .top-bar {
+      display: flex; align-items: center;
+      font-size: 20px; font-weight: bold;
+      margin-bottom: 20px;
     }
-    .list li.selected .radio::before {
-      content:'';
-      position:absolute; top:4px; left:4px;
-      width:8px; height:8px;
-      border-radius:50%; background:#2196f3;
-    }
-    .controls {
-      text-align:right;
-    }
-    .controls button {
-      padding:8px 16px; margin-left:8px;
-      font-size:16px; cursor:pointer;
+    .top-bar span {
+      margin-right: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="back" onclick="history.back()">← 뒤로</div>
+  <div class="top-bar">
+    <span onclick="history.back()">←</span>
+    환율계산 설정
+  </div>
 
-  <div class="section">
-    <h2>① 기본 통화 설정</h2>
-    <ul id="baseList" class="list"></ul>
-  </div>
-  <div class="section">
-    <h2>② 목적 통화 설정</h2>
-    <ul id="tgtList" class="list"></ul>
-  </div>
-  <div class="section">
-    <h2>③ 테마 선택</h2>
-    <ul id="themeList" class="list">
-      <li data-theme=""   class=""><span class="code">기본</span><div class="radio"></div></li>
-      <li data-theme="dark" class=""><span class="code">다크</span><div class="radio"></div></li>
-      <li data-theme="pastel" class=""><span class="code">파스텔</span><div class="radio"></div></li>
-      <li data-theme="mono"   class=""><span class="code">모노</span><div class="radio"></div></li>
-    </ul>
-  </div>
-  <div class="controls">
-    <button id="saveBtn">저장</button>
-    <button id="cancelBtn" onclick="history.back()">취소</button>
+  <label for="baseCurrency">① 기본 통화</label>
+  <select id="baseCurrency"></select>
+
+  <label for="targetCurrency">② 목적 통화</label>
+  <select id="targetCurrency"></select>
+
+  <label for="themeSelect">③ 테마 선택</label>
+  <select id="themeSelect">
+    <option value="">기본</option>
+    <option value="dark">다크</option>
+    <option value="pastel">파스텔</option>
+    <option value="mono">모노</option>
+  </select>
+
+  <label for="customRate">④ 직접 환율 입력 (1 USD → KRW)</label>
+  <input id="customRate" type="number" placeholder="예) 1422" />
+
+  <div>
+    <button onclick="saveSettings()">저장</button>
+    <button onclick="resetSettings()">초기화</button>
   </div>
 
   <script>
@@ -82,60 +75,57 @@
       CNY:'🇨🇳', VND:'🇻🇳', THB:'🇹🇭', PHP:'🇵🇭',
       RUB:'🇷🇺', HKD:'🇭🇰'
     };
-    const CODES = Object.keys(FLAGS);
-    const baseList = document.getElementById('baseList'),
-          tgtList  = document.getElementById('tgtList'),
-          themeList= document.getElementById('themeList'),
-          saveBtn  = document.getElementById('saveBtn');
+    const codes = Object.keys(FLAGS);
+    const baseSel = document.getElementById('baseCurrency');
+    const targetSel = document.getElementById('targetCurrency');
+    const themeSel = document.getElementById('themeSelect');
+    const rateInput = document.getElementById('customRate');
 
-    const STORAGE = {
-      base: localStorage.getItem('base')   || 'USD',
-      target:localStorage.getItem('target')|| 'KRW',
-      theme: localStorage.getItem('theme') || ''
-    };
-
-    function makeList(container, key){
-      CODES.forEach(code=>{
-        const li = document.createElement('li');
-        li.dataset.code = code;
-        li.innerHTML = `<span class="flag">${FLAGS[code]}</span>
-                        <span class="code">${code}</span>
-                        <div class="radio"></div>`;
-        li.addEventListener('click',()=>{
-          // 선택표시
-          container.querySelectorAll('li').forEach(x=>x.classList.remove('selected'));
-          li.classList.add('selected');
-        });
-        container.appendChild(li);
+    function makeOptions(select, selected) {
+      codes.forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = `${FLAGS[code]} ${code}`;
+        if (code === selected) opt.selected = true;
+        select.appendChild(opt);
       });
-      // 초기 선택
-      container.querySelector(`li[data-code="${STORAGE[key]}"]`)
-               .classList.add('selected');
     }
 
-    // 테마 리스트 선택 처리
-    themeList.querySelectorAll('li').forEach(li=>{
-      if(li.dataset.theme===STORAGE.theme) li.classList.add('selected');
-      li.addEventListener('click',()=>{
-        themeList.querySelectorAll('li').forEach(x=>x.classList.remove('selected'));
-        li.classList.add('selected');
-      });
-    });
+    function loadSettings() {
+      const base = localStorage.getItem('base') || 'USD';
+      const target = localStorage.getItem('target') || 'KRW';
+      const theme = localStorage.getItem('theme') || '';
+      const rate = localStorage.getItem('customRate') || '';
 
-    // 기본/목적 리스트 생성
-    makeList(baseList, 'base');
-    makeList(tgtList,  'target');
+      makeOptions(baseSel, base);
+      makeOptions(targetSel, target);
+      themeSel.value = theme;
+      rateInput.value = rate;
+    }
 
-    saveBtn.addEventListener('click',()=>{
-      const selBase = baseList.querySelector('li.selected').dataset.code;
-      const selTgt  = tgtList.querySelector('li.selected').dataset.code;
-      const selTheme= themeList.querySelector('li.selected').dataset.theme;
-      localStorage.setItem('base', selBase);
-      localStorage.setItem('target', selTgt);
-      localStorage.setItem('theme', selTheme);
+    function saveSettings() {
+      localStorage.setItem('base', baseSel.value);
+      localStorage.setItem('target', targetSel.value);
+      localStorage.setItem('theme', themeSel.value);
+      if (rateInput.value) {
+        localStorage.setItem('customRate', rateInput.value);
+      } else {
+        localStorage.removeItem('customRate');
+      }
       alert('설정이 저장되었습니다.');
       history.back();
-    });
+    }
+
+    function resetSettings() {
+      localStorage.removeItem('base');
+      localStorage.removeItem('target');
+      localStorage.removeItem('theme');
+      localStorage.removeItem('customRate');
+      alert('설정이 초기화되었습니다.');
+      location.reload();
+    }
+
+    loadSettings();
   </script>
 </body>
 </html>
