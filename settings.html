@@ -39,37 +39,33 @@
 <body>
   <div class="container">
     <div class="header">
-      <button class="back-btn" onclick="location.href='index.html'">←</button>
+      <button class="back-btn" onclick="history.back()">←</button>
       <h2>환율계산 설정</h2>
     </div>
 
-    <!-- ① 기본 통화 -->
     <div class="section">
       <label>① 기본 통화 설정</label>
       <select id="baseSelect"></select>
     </div>
 
-    <!-- ② 목적 통화 -->
     <div class="section">
       <label>② 목적 통화 설정</label>
       <select id="targetSelect"></select>
     </div>
 
-    <!-- ③ 테마 선택 -->
     <div class="section">
       <label>③ 테마 선택</label>
       <select id="themeSelect">
-        <option value="">기본</option>
+        <option value="">시스템 기본</option>
         <option value="dark">다크</option>
-        <option value="pastel">파스텔</option>
-        <option value="mono">모노톤</option>
+        <option value="pink">핑크</option>
+        <option value="blue">블루</option>
       </select>
     </div>
 
-    <!-- ④ 직접 환율 입력 -->
     <div class="section">
       <label id="customLabel">④ 직접 환율 입력 (1 USD → KRW)</label>
-      <input type="number" id="customRate" placeholder="예) 1422" />
+      <input type="number" id="customRate" placeholder="예) 1422"/>
       <div class="row">
         <button id="saveBtn">저장</button>
         <button id="resetBtn">초기화</button>
@@ -79,9 +75,9 @@
 
   <script>
     const FLAGS = {
-      KRW:'🇰🇷 한국 원', USD:'🇺🇸 미국 달러', EUR:'🇪🇺 유로',
-      JPY:'🇯🇵 일본 엔', CNY:'🇨🇳 위안', VND:'🇻🇳 베트남 동',
-      THB:'🇹🇭 태국 밧', PHP:'🇵🇭 필리핀 페소',
+      KRW:'🇰🇷 대한민국 원', USD:'🇺🇸 미국 달러', EUR:'🇪🇺 유로',
+      JPY:'🇯🇵 일본 엔', CNY:'🇨🇳 중국 위안', VND:'🇻🇳 베트남 동',
+      THB:'🇹🇭 태국 바트', PHP:'🇵🇭 필리핀 페소',
       RUB:'🇷🇺 러시아 루블', HKD:'🇭🇰 홍콩 달러'
     };
 
@@ -93,7 +89,6 @@
     const saveBtn      = document.getElementById('saveBtn');
     const resetBtn     = document.getElementById('resetBtn');
 
-    // 셀렉트 옵션 채우기
     function populateSelect(sel, selected) {
       sel.innerHTML = '';
       for (let code in FLAGS) {
@@ -105,62 +100,52 @@
       }
     }
 
-    // 라벨 업데이트
     function updateCustomLabel() {
-      customLabel.textContent = `④ 직접 환율 입력 (1 ${baseSelect.value} → ${targetSelect.value})`;
+      customLabel.textContent =
+        `④ 직접 환율 입력 (1 ${baseSelect.value} → ${targetSelect.value})`;
     }
 
-    // 설정 불러오기
     function loadSettings() {
-      const base  = localStorage.getItem('base')   || 'USD';
-      const target= localStorage.getItem('target') || 'KRW';
-      const theme = localStorage.getItem('theme')  || '';
-      const custom= localStorage.getItem('customRate') || '';
+      const base   = localStorage.getItem('base')   || 'USD';
+      const target = localStorage.getItem('target') || 'KRW';
+      const theme  = localStorage.getItem('theme')  || '';
+      const custom = localStorage.getItem('customRate')||'';
 
       populateSelect(baseSelect, base);
       populateSelect(targetSelect, target);
       themeSelect.value = theme;
       customRate.value   = custom;
-
       updateCustomLabel();
     }
 
-    // 저장
     function saveSettings() {
       localStorage.setItem('base', baseSelect.value);
       localStorage.setItem('target', targetSelect.value);
       localStorage.setItem('theme', themeSelect.value);
       localStorage.setItem('customRate', customRate.value);
-      // 바로 다른 창(storage)에 알림
       alert('설정이 저장되었습니다.');
     }
 
-    // 초기화
     function resetCustomRate() {
       customRate.value = '';
       localStorage.removeItem('customRate');
     }
 
-    // 이벤트
-    baseSelect.addEventListener('change', ()=>{
+    baseSelect.addEventListener('change', ()=> {
       localStorage.setItem('base', baseSelect.value);
       updateCustomLabel();
     });
-    targetSelect.addEventListener('change', ()=>{
+    targetSelect.addEventListener('change', ()=> {
       localStorage.setItem('target', targetSelect.value);
       updateCustomLabel();
     });
-    themeSelect.addEventListener('change', () => {
+    themeSelect.addEventListener('change', ()=> {
       localStorage.setItem('theme', themeSelect.value);
     });
-    saveBtn.addEventListener('click', saveSettings);
-    resetBtn.addEventListener('click', resetCustomRate);
+    saveBtn.addEventListener('click',    saveSettings);
+    resetBtn.addEventListener('click',   resetCustomRate);
 
-    // 뒤로가기 버튼 (하드웨어) 막고, index.html 로
-    window.addEventListener('popstate', ()=> {
-      location.href = 'index.html';
-    });
-
+    window.addEventListener('popstate', ()=> history.back());
     loadSettings();
   </script>
 </body>
