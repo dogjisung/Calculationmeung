@@ -3,98 +3,165 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>환율계산기 설정</title>
+  <title>환율계산 설정</title>
   <style>
     html, body {
       margin:0; padding:0;
       width:100vw; height:100vh;
       font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
       background:#fff; color:#000;
-      box-sizing:border-box;
     }
     .container {
-      padding:16px;
+      max-width:360px; margin:0 auto; padding:16px;
     }
-    .back {
-      font-size:24px; cursor:pointer;
-      background:none; border:none;
+    .header {
+      display:flex; align-items:center;
     }
-    h1 {
-      display:inline-block; margin-left:8px; font-size:20px;
+    .back-btn {
+      font-size:24px; background:none; border:none;
+      cursor:pointer; margin-right:8px;
     }
-    .item {
-      margin:16px 0;
+    h2 { margin:0; font-size:20px; }
+    .section { margin-top:24px; }
+    .section label { font-weight:600; display:block; margin-bottom:8px; }
+    select, input {
+      width:100%; padding:8px 12px; font-size:16px;
+      border:1px solid #ccc; border-radius:4px;
     }
-    label { display:block; margin-bottom:4px; }
-    select, input[type="number"] {
-      width:100%; padding:8px; font-size:16px;
-    }
-    button {
-      padding:10px 20px; margin-right:8px;
-      font-size:16px; cursor:pointer;
+    .row { display:flex; gap:8px; margin-top:12px; }
+    .row button {
+      flex:1; padding:10px; font-size:16px;
+      border:none; border-radius:4px; cursor:pointer;
+      background:#eee;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <button class="back" onclick="history.back()">←</button>
-    <h1>환율 계산기 설정</h1>
+    <div class="header">
+      <button class="back-btn" onclick="location.href='index.html'">←</button>
+      <h2>환율계산 설정</h2>
+    </div>
 
-    <div class="item">
-      <label for="base">① 기본 통화</label>
-      <select id="base"></select>
+    <!-- ① 기본 통화 -->
+    <div class="section">
+      <label>① 기본 통화 설정</label>
+      <select id="baseSelect"></select>
     </div>
-    <div class="item">
-      <label for="target">② 목표 통화</label>
-      <select id="target"></select>
+
+    <!-- ② 목적 통화 -->
+    <div class="section">
+      <label>② 목적 통화 설정</label>
+      <select id="targetSelect"></select>
     </div>
-    <div class="item">
-      <label for="theme">③ 테마 선택</label>
-      <select id="theme">
+
+    <!-- ③ 테마 선택 -->
+    <div class="section">
+      <label>③ 테마 선택</label>
+      <select id="themeSelect">
         <option value="">기본</option>
         <option value="dark">다크</option>
         <option value="pastel">파스텔</option>
-        <option value="mono">모노</option>
+        <option value="mono">모노톤</option>
       </select>
+    </div>
+
+    <!-- ④ 직접 환율 입력 -->
+    <div class="section">
+      <label id="customLabel">④ 직접 환율 입력 (1 USD → KRW)</label>
+      <input type="number" id="customRate" placeholder="예) 1422" />
+      <div class="row">
+        <button id="saveBtn">저장</button>
+        <button id="resetBtn">초기화</button>
+      </div>
     </div>
   </div>
 
   <script>
     const FLAGS = {
-      KRW:'🇰🇷 대한민국 원', USD:'🇺🇸 미국 달러',
-      EUR:'🇪🇺 유로', JPY:'🇯🇵 일본 엔화',
-      CNY:'🇨🇳 중국 위안', VND:'🇻🇳 베트남 동',
-      THB:'🇹🇭 태국 바트', PHP:'🇵🇭 필리핀 페소',
+      KRW:'🇰🇷 한국 원', USD:'🇺🇸 미국 달러', EUR:'🇪🇺 유로',
+      JPY:'🇯🇵 일본 엔', CNY:'🇨🇳 위안', VND:'🇻🇳 베트남 동',
+      THB:'🇹🇭 태국 밧', PHP:'🇵🇭 필리핀 페소',
       RUB:'🇷🇺 러시아 루블', HKD:'🇭🇰 홍콩 달러'
     };
 
-    const baseSel   = document.getElementById('base');
-    const targetSel = document.getElementById('target');
-    const themeSel  = document.getElementById('theme');
+    const baseSelect   = document.getElementById('baseSelect');
+    const targetSelect = document.getElementById('targetSelect');
+    const themeSelect  = document.getElementById('themeSelect');
+    const customRate   = document.getElementById('customRate');
+    const customLabel  = document.getElementById('customLabel');
+    const saveBtn      = document.getElementById('saveBtn');
+    const resetBtn     = document.getElementById('resetBtn');
 
-    // 셀렉트 박스 채우기
-    Object.entries(FLAGS).forEach(([code,name])=>{
-      const o1 = new Option(name, code);
-      const o2 = new Option(name, code);
-      baseSel.add(o1);
-      targetSel.add(o2);
+    // 셀렉트 옵션 채우기
+    function populateSelect(sel, selected) {
+      sel.innerHTML = '';
+      for (let code in FLAGS) {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = FLAGS[code];
+        if (code === selected) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    }
+
+    // 라벨 업데이트
+    function updateCustomLabel() {
+      customLabel.textContent = `④ 직접 환율 입력 (1 ${baseSelect.value} → ${targetSelect.value})`;
+    }
+
+    // 설정 불러오기
+    function loadSettings() {
+      const base  = localStorage.getItem('base')   || 'USD';
+      const target= localStorage.getItem('target') || 'KRW';
+      const theme = localStorage.getItem('theme')  || '';
+      const custom= localStorage.getItem('customRate') || '';
+
+      populateSelect(baseSelect, base);
+      populateSelect(targetSelect, target);
+      themeSelect.value = theme;
+      customRate.value   = custom;
+
+      updateCustomLabel();
+    }
+
+    // 저장
+    function saveSettings() {
+      localStorage.setItem('base', baseSelect.value);
+      localStorage.setItem('target', targetSelect.value);
+      localStorage.setItem('theme', themeSelect.value);
+      localStorage.setItem('customRate', customRate.value);
+      // 바로 다른 창(storage)에 알림
+      alert('설정이 저장되었습니다.');
+    }
+
+    // 초기화
+    function resetCustomRate() {
+      customRate.value = '';
+      localStorage.removeItem('customRate');
+    }
+
+    // 이벤트
+    baseSelect.addEventListener('change', ()=>{
+      localStorage.setItem('base', baseSelect.value);
+      updateCustomLabel();
+    });
+    targetSelect.addEventListener('change', ()=>{
+      localStorage.setItem('target', targetSelect.value);
+      updateCustomLabel();
+    });
+    themeSelect.addEventListener('change', () => {
+      localStorage.setItem('theme', themeSelect.value);
+    });
+    saveBtn.addEventListener('click', saveSettings);
+    resetBtn.addEventListener('click', resetCustomRate);
+
+    // 뒤로가기 버튼 (하드웨어) 막고, index.html 로
+    window.addEventListener('popstate', ()=> {
+      location.href = 'index.html';
     });
 
-    // 로컬 설정 불러오기
-    baseSel.value   = localStorage.getItem('base')   || 'USD';
-    targetSel.value = localStorage.getItem('target') || 'KRW';
-    themeSel.value  = localStorage.getItem('theme')  || '';
-
-    // 변경 즉시 저장 + storage 이벤트 발생
-    baseSel.onchange = () => {
-      localStorage.setItem('base', baseSel.value);
-    };
-    targetSel.onchange = () => {
-      localStorage.setItem('target', targetSel.value);
-    };
-    themeSel.onchange = () => {
-      localStorage.setItem('theme', themeSel.value);
-    };
+    loadSettings();
   </script>
 </body>
 </html>
