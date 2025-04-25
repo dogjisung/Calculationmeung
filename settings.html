@@ -65,7 +65,7 @@
   <input id="customRate" type="number" placeholder="예) 1422" />
 
   <div>
-    <button onclick="saveSettings()">저장</button>
+    <button onclick="saveCustomRate()">저장</button>
     <button onclick="resetSettings()">초기화</button>
   </div>
 
@@ -103,17 +103,14 @@
       rateInput.value = rate;
     }
 
-    function saveSettings() {
-      localStorage.setItem('base', baseSel.value);
-      localStorage.setItem('target', targetSel.value);
-      localStorage.setItem('theme', themeSel.value);
+    function saveCustomRate() {
       if (rateInput.value) {
         localStorage.setItem('customRate', rateInput.value);
+        alert('환율이 저장되었습니다.');
+        history.back();
       } else {
-        localStorage.removeItem('customRate');
+        alert('환율을 입력하세요.');
       }
-      alert('설정이 저장되었습니다.');
-      history.back();
     }
 
     function resetSettings() {
@@ -124,6 +121,19 @@
       alert('설정이 초기화되었습니다.');
       location.reload();
     }
+
+    // 바로 반영되는 설정
+    baseSel.addEventListener('change', () => {
+      localStorage.setItem('base', baseSel.value);
+    });
+
+    targetSel.addEventListener('change', () => {
+      localStorage.setItem('target', targetSel.value);
+    });
+
+    themeSel.addEventListener('change', () => {
+      localStorage.setItem('theme', themeSel.value);
+    });
 
     loadSettings();
   </script>
