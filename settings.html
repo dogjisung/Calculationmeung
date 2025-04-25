@@ -68,16 +68,16 @@
     const customRateInput = document.getElementById('customRate');
 
     const CURRENCIES = {
-      USD: '🇺🇸 미국 달러',
-      KRW: '🇰🇷 한국 원',
-      JPY: '🇯🇵 일본 엔',
-      CNY: '🇨🇳 중국 위안',
-      VND: '🇻🇳 베트남 동',
-      EUR: '🇪🇺 유로',
-      THB: '🇹🇭 태국 바트',
-      PHP: '🇵🇭 필리핀 페소',
-      RUB: '🇷🇺 러시아 루블',
-      HKD: '🇭🇰 홍콩 달러'
+      USD: '🇺🇸 미국 달러 (USD)',
+      KRW: '🇰🇷 대한민국 원 (KRW)',
+      JPY: '🇯🇵 일본 엔 (JPY)',
+      CNY: '🇨🇳 중국 위안 (CNY)',
+      VND: '🇻🇳 베트남 동 (VND)',
+      EUR: '🇪🇺 유로 (EUR)',
+      THB: '🇹🇭 태국 바트 (THB)',
+      PHP: '🇵🇭 필리핀 페소 (PHP)',
+      RUB: '🇷🇺 러시아 루블 (RUB)',
+      HKD: '🇭🇰 홍콩 달러 (HKD)'
     };
 
     Object.entries(CURRENCIES).forEach(([code, label]) => {
@@ -113,12 +113,12 @@
     function updateRateLabel() {
       const base = baseSel.value;
       const target = targetSel.value;
-      customRateInput.placeholder = `1 ${base} = ? ${target}`;
+      customRateInput.placeholder = `1 ${base} → ${target}`;
     }
 
     updateRateLabel();
 
-    // Android 뒤로가기 버튼처럼 동작
+    // 뒤로가기 처리
     window.addEventListener('popstate', () => {
       location.href = 'index.html';
     });
