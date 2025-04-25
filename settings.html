@@ -6,121 +6,122 @@
   <title>설정</title>
   <style>
     body {
+      margin: 0;
       font-family: sans-serif;
       padding: 20px;
+      background: #f5f5f5;
     }
     h2 {
       text-align: center;
-      margin-bottom: 20px;
-    }
-    .section {
-      margin-bottom: 30px;
-    }
-    select, input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      font-size: 16px;
-      margin-top: 8px;
-    }
-    button {
-      padding: 10px 16px;
-      margin-top: 10px;
-      font-size: 16px;
     }
     label {
+      display: block;
+      margin: 16px 0 6px;
       font-weight: bold;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .back-btn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <button class="back-btn" onclick="history.back()">⬅️</button>
   <h2>설정</h2>
 
   <div class="section">
-    <label>기본 통화</label>
-    <select id="baseSelect"></select>
-  </div>
-
-  <div class="section">
-    <label>목적 통화</label>
-    <select id="targetSelect"></select>
-  </div>
-
-  <div class="section">
-    <label>테마 설정</label>
-    <select id="themeSelect">
-      <option value="">기본</option>
-      <option value="dark">다크</option>
-      <option value="pastel">파스텔</option>
-      <option value="mono">모노</option>
+    <label for="base">기본 통화 선택</label>
+    <select id="base">
+      <option value="USD">🇺🇸 미국 달러 (USD)</option>
+      <option value="KRW">🇰🇷 대한민국 원 (KRW)</option>
+      <option value="JPY">🇯🇵 일본 엔화 (JPY)</option>
+      <option value="CNY">🇨🇳 중국 위안화 (CNY)</option>
+      <option value="VND">🇻🇳 베트남 동 (VND)</option>
+      <option value="EUR">🇪🇺 유로 (EUR)</option>
     </select>
   </div>
 
   <div class="section">
-    <label>직접 환율 입력</label>
-    <input type="number" id="customRate" step="0.0001" placeholder="직접 환율 입력" />
-    <button id="saveRate">저장</button>
+    <label for="target">목적 통화 선택</label>
+    <select id="target">
+      <option value="KRW">🇰🇷 대한민국 원 (KRW)</option>
+      <option value="USD">🇺🇸 미국 달러 (USD)</option>
+      <option value="JPY">🇯🇵 일본 엔화 (JPY)</option>
+      <option value="CNY">🇨🇳 중국 위안화 (CNY)</option>
+      <option value="VND">🇻🇳 베트남 동 (VND)</option>
+      <option value="EUR">🇪🇺 유로 (EUR)</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <label for="customRate">직접 환율 입력 (<span id="customLabel">1 USD → KRW</span>)</label>
+    <input type="number" id="customRate" step="any" placeholder="직접 환율을 입력하세요" />
+  </div>
+
+  <div class="section">
+    <label for="theme">테마 선택</label>
+    <select id="theme">
+      <option value="">기본 테마</option>
+      <option value="dark">다크 모드</option>
+      <option value="pastel">파스텔</option>
+      <option value="mono">모노톤</option>
+    </select>
   </div>
 
   <script>
-    const baseSel = document.getElementById('baseSelect');
-    const targetSel = document.getElementById('targetSelect');
-    const themeSel = document.getElementById('themeSelect');
-    const customRateInput = document.getElementById('customRate');
+    const baseSel = document.getElementById('base');
+    const targetSel = document.getElementById('target');
+    const rateInput = document.getElementById('customRate');
+    const customLabel = document.getElementById('customLabel');
+    const themeSel = document.getElementById('theme');
 
-    const CURRENCIES = {
-      USD: '🇺🇸 미국 달러 (USD)',
-      KRW: '🇰🇷 대한민국 원 (KRW)',
-      JPY: '🇯🇵 일본 엔 (JPY)',
-      CNY: '🇨🇳 중국 위안 (CNY)',
-      VND: '🇻🇳 베트남 동 (VND)',
-      EUR: '🇪🇺 유로 (EUR)',
-      THB: '🇹🇭 태국 바트 (THB)',
-      PHP: '🇵🇭 필리핀 페소 (PHP)',
-      RUB: '🇷🇺 러시아 루블 (RUB)',
-      HKD: '🇭🇰 홍콩 달러 (HKD)'
-    };
-
-    Object.entries(CURRENCIES).forEach(([code, label]) => {
-      baseSel.innerHTML += `<option value="${code}">${label}</option>`;
-      targetSel.innerHTML += `<option value="${code}">${label}</option>`;
-    });
-
-    // 기존 설정 적용
-    baseSel.value = localStorage.getItem('base') || 'USD';
-    targetSel.value = localStorage.getItem('target') || 'KRW';
-    themeSel.value = localStorage.getItem('theme') || '';
-    customRateInput.value = localStorage.getItem('customRate') || '';
+    function updateCustomLabel() {
+      const from = baseSel.value;
+      const to = targetSel.value;
+      customLabel.innerText = `1 ${from} → ${to}`;
+      rateInput.value = localStorage.getItem(`customRate_${from}_${to}`) || '';
+    }
 
     baseSel.addEventListener('change', () => {
       localStorage.setItem('base', baseSel.value);
-      updateRateLabel();
+      updateCustomLabel();
     });
 
     targetSel.addEventListener('change', () => {
       localStorage.setItem('target', targetSel.value);
-      updateRateLabel();
+      updateCustomLabel();
+    });
+
+    rateInput.addEventListener('input', () => {
+      const key = `customRate_${baseSel.value}_${targetSel.value}`;
+      localStorage.setItem(key, rateInput.value);
     });
 
     themeSel.addEventListener('change', () => {
       localStorage.setItem('theme', themeSel.value);
+      window.location.reload(); // 즉시 테마 적용 위해 새로고침
     });
 
-    document.getElementById('saveRate').addEventListener('click', () => {
-      localStorage.setItem('customRate', customRateInput.value);
-      alert('환율 저장 완료');
-    });
-
-    function updateRateLabel() {
-      const base = baseSel.value;
-      const target = targetSel.value;
-      customRateInput.placeholder = `1 ${base} → ${target}`;
-    }
-
-    updateRateLabel();
-
-    // 뒤로가기 처리
-    window.addEventListener('popstate', () => {
-      location.href = 'index.html';
+    window.addEventListener('DOMContentLoaded', () => {
+      baseSel.value = localStorage.getItem('base') || 'USD';
+      targetSel.value = localStorage.getItem('target') || 'KRW';
+      themeSel.value = localStorage.getItem('theme') || '';
+      updateCustomLabel();
     });
   </script>
 </body>
