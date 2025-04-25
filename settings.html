@@ -1,128 +1,100 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>설정</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>환율계산기 설정</title>
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
+    html, body {
+      margin:0; padding:0;
+      width:100vw; height:100vh;
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+      background:#fff; color:#000;
+      box-sizing:border-box;
     }
-    h2 {
-      text-align: center;
+    .container {
+      padding:16px;
     }
-    label {
-      display: block;
-      margin: 16px 0 6px;
-      font-weight: bold;
+    .back {
+      font-size:24px; cursor:pointer;
+      background:none; border:none;
     }
-    select, input {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+    h1 {
+      display:inline-block; margin-left:8px; font-size:20px;
     }
-    .section {
-      margin-bottom: 20px;
+    .item {
+      margin:16px 0;
     }
-    .back-btn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      font-size: 24px;
-      background: none;
-      border: none;
-      cursor: pointer;
+    label { display:block; margin-bottom:4px; }
+    select, input[type="number"] {
+      width:100%; padding:8px; font-size:16px;
+    }
+    button {
+      padding:10px 20px; margin-right:8px;
+      font-size:16px; cursor:pointer;
     }
   </style>
 </head>
 <body>
-  <button class="back-btn" onclick="history.back()">⬅️</button>
-  <h2>설정</h2>
+  <div class="container">
+    <button class="back" onclick="history.back()">←</button>
+    <h1>환율 계산기 설정</h1>
 
-  <div class="section">
-    <label for="base">기본 통화 선택</label>
-    <select id="base">
-      <option value="USD">🇺🇸 미국 달러 (USD)</option>
-      <option value="KRW">🇰🇷 대한민국 원 (KRW)</option>
-      <option value="JPY">🇯🇵 일본 엔화 (JPY)</option>
-      <option value="CNY">🇨🇳 중국 위안화 (CNY)</option>
-      <option value="VND">🇻🇳 베트남 동 (VND)</option>
-      <option value="EUR">🇪🇺 유로 (EUR)</option>
-    </select>
-  </div>
-
-  <div class="section">
-    <label for="target">목적 통화 선택</label>
-    <select id="target">
-      <option value="KRW">🇰🇷 대한민국 원 (KRW)</option>
-      <option value="USD">🇺🇸 미국 달러 (USD)</option>
-      <option value="JPY">🇯🇵 일본 엔화 (JPY)</option>
-      <option value="CNY">🇨🇳 중국 위안화 (CNY)</option>
-      <option value="VND">🇻🇳 베트남 동 (VND)</option>
-      <option value="EUR">🇪🇺 유로 (EUR)</option>
-    </select>
-  </div>
-
-  <div class="section">
-    <label for="customRate">직접 환율 입력 (<span id="customLabel">1 USD → KRW</span>)</label>
-    <input type="number" id="customRate" step="any" placeholder="직접 환율을 입력하세요" />
-  </div>
-
-  <div class="section">
-    <label for="theme">테마 선택</label>
-    <select id="theme">
-      <option value="">기본 테마</option>
-      <option value="dark">다크 모드</option>
-      <option value="pastel">파스텔</option>
-      <option value="mono">모노톤</option>
-    </select>
+    <div class="item">
+      <label for="base">① 기본 통화</label>
+      <select id="base"></select>
+    </div>
+    <div class="item">
+      <label for="target">② 목표 통화</label>
+      <select id="target"></select>
+    </div>
+    <div class="item">
+      <label for="theme">③ 테마 선택</label>
+      <select id="theme">
+        <option value="">기본</option>
+        <option value="dark">다크</option>
+        <option value="pastel">파스텔</option>
+        <option value="mono">모노</option>
+      </select>
+    </div>
   </div>
 
   <script>
-    const baseSel = document.getElementById('base');
+    const FLAGS = {
+      KRW:'🇰🇷 대한민국 원', USD:'🇺🇸 미국 달러',
+      EUR:'🇪🇺 유로', JPY:'🇯🇵 일본 엔화',
+      CNY:'🇨🇳 중국 위안', VND:'🇻🇳 베트남 동',
+      THB:'🇹🇭 태국 바트', PHP:'🇵🇭 필리핀 페소',
+      RUB:'🇷🇺 러시아 루블', HKD:'🇭🇰 홍콩 달러'
+    };
+
+    const baseSel   = document.getElementById('base');
     const targetSel = document.getElementById('target');
-    const rateInput = document.getElementById('customRate');
-    const customLabel = document.getElementById('customLabel');
-    const themeSel = document.getElementById('theme');
+    const themeSel  = document.getElementById('theme');
 
-    function updateCustomLabel() {
-      const from = baseSel.value;
-      const to = targetSel.value;
-      customLabel.innerText = `1 ${from} → ${to}`;
-      rateInput.value = localStorage.getItem(`customRate_${from}_${to}`) || '';
-    }
+    // 셀렉트 박스 채우기
+    Object.entries(FLAGS).forEach(([code,name])=>{
+      const o1 = new Option(name, code);
+      const o2 = new Option(name, code);
+      baseSel.add(o1);
+      targetSel.add(o2);
+    });
 
-    baseSel.addEventListener('change', () => {
+    // 로컬 설정 불러오기
+    baseSel.value   = localStorage.getItem('base')   || 'USD';
+    targetSel.value = localStorage.getItem('target') || 'KRW';
+    themeSel.value  = localStorage.getItem('theme')  || '';
+
+    // 변경 즉시 저장 + storage 이벤트 발생
+    baseSel.onchange = () => {
       localStorage.setItem('base', baseSel.value);
-      updateCustomLabel();
-    });
-
-    targetSel.addEventListener('change', () => {
+    };
+    targetSel.onchange = () => {
       localStorage.setItem('target', targetSel.value);
-      updateCustomLabel();
-    });
-
-    rateInput.addEventListener('input', () => {
-      const key = `customRate_${baseSel.value}_${targetSel.value}`;
-      localStorage.setItem(key, rateInput.value);
-    });
-
-    themeSel.addEventListener('change', () => {
+    };
+    themeSel.onchange = () => {
       localStorage.setItem('theme', themeSel.value);
-      window.location.reload(); // 즉시 테마 적용 위해 새로고침
-    });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      baseSel.value = localStorage.getItem('base') || 'USD';
-      targetSel.value = localStorage.getItem('target') || 'KRW';
-      themeSel.value = localStorage.getItem('theme') || '';
-      updateCustomLabel();
-    });
+    };
   </script>
 </body>
 </html>
