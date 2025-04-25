@@ -12,37 +12,30 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
       background: #fff;
       color: #000;
-      display: flex; justify-content: center; align-items: center;
     }
     .container {
-      width: 100%; height: 100%;
-      max-width: 400px;
+      height: 100%; width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 10px;
-      box-sizing: border-box;
+    }
+    .top {
+      display: flex; justify-content: flex-end;
+      align-items: center;
     }
     .settings-btn {
-      font-size: 22px;
+      font-size: 24px;
       background: none;
       border: none;
       cursor: pointer;
-      position: absolute;
-      top: 12px;
-      right: 12px;
     }
     .rate-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: flex; justify-content: space-between;
       margin: 10px 0;
       font-size: 20px;
-      font-weight: 500;
-    }
-    .amount {
-      font-size: 24px;
-      font-weight: bold;
     }
     .stamp {
       text-align: center;
@@ -50,13 +43,14 @@
       color: gray;
     }
     .keypad {
+      flex: 1;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 20px;
     }
     .keypad button {
-      padding: 18px;
+      padding: 20px;
       font-size: 20px;
       border: none;
       border-radius: 6px;
@@ -70,20 +64,19 @@
 </head>
 <body>
   <div class="container">
-    <button class="settings-btn" onclick="location.href='settings.html'">⚙️</button>
-
-    <div>
-      <div class="rate-panel">
-        <div><span id="flag1">🇺🇸</span> <span id="code1">USD</span></div>
-        <div id="value1" class="amount">0</div>
-      </div>
-      <div class="rate-panel">
-        <div><span id="flag2">🇰🇷</span> <span id="code2">KRW</span></div>
-        <div id="value2" class="amount">0</div>
-      </div>
-      <div class="stamp" id="rateTime">조회 시간: --</div>
-      <div class="stamp" id="unitRate">1 USD = -- KRW</div>
+    <div class="top">
+      <button class="settings-btn" onclick="location.href='settings.html'">⚙️</button>
     </div>
+    <div class="rate-panel">
+      <div><span id="flag1">🇺🇸</span> <span id="code1">USD</span></div>
+      <div id="value1">0</div>
+    </div>
+    <div class="rate-panel">
+      <div><span id="flag2">🇰🇷</span> <span id="code2">KRW</span></div>
+      <div id="value2">0</div>
+    </div>
+    <div class="stamp" id="rateTime">조회 시간: --</div>
+    <div class="stamp" id="unitRate">1 USD = -- KRW</div>
 
     <div class="keypad" id="keypad">
       <button class="red" data-action="clear">C</button>
@@ -139,8 +132,8 @@
         `;
       } else if (theme === 'pastel') {
         style.innerHTML = `
-          body { background: #fafafa; color: #333; }
-          .keypad button { background: #ffe0f0; }
+          body { background: #fff0f5; color: #333; }
+          .keypad button { background: #fdd; }
         `;
       } else if (theme === 'mono') {
         style.innerHTML = `
@@ -148,7 +141,7 @@
           .keypad button { background: #ccc; color: #000; }
         `;
       } else {
-        style.innerHTML = '';
+        style.innerHTML = ''; // 기본
       }
     }
 
@@ -158,11 +151,12 @@
 
     async function fetchRate() {
       const from = c1.innerText, to = c2.innerText;
-      const customRate = localStorage.getItem('customRate');
+      const customKey = `customRate_${from}_${to}`;
+      const customRate = localStorage.getItem(customKey);
       let rate = null;
 
       try {
-        if (customRate && from === 'USD' && to === 'KRW') {
+        if (customRate) {
           rate = parseFloat(customRate);
         } else {
           const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
@@ -170,7 +164,7 @@
           rate = json.rates[to];
         }
 
-        if (!rate) throw new Error("Rate 불러오기 실패");
+        if (!rate) throw new Error("환율 가져오기 실패");
 
         rt.innerText = '조회 시간: ' + new Date().toLocaleString();
         ur.innerText = `1 ${from} = ${
@@ -182,7 +176,7 @@
           maximumFractionDigits: to === 'KRW' ? 0 : 6
         });
       } catch (e) {
-        alert('환율 정보를 가져올 수 없습니다: ' + e.message);
+        alert('환율 정보를 불러올 수 없습니다: ' + e.message);
       }
     }
 
