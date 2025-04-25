@@ -6,133 +6,229 @@
   <title>환율계산</title>
   <style>
     :root {
-      --bg: #fff; --fg: #222; --btn-bg: #e0e0e0; --op-bg: #fbc02d; --eq-bg: #4caf50;
+      --bg: #fff; --fg: #222;
+      --btn: #e0e0e0; --btn-op: #fbc02d; --btn-eq: #4caf50; --btn-clear: #f44336;
     }
     [data-theme="dark"] {
-      --bg: #121212; --fg: #eee; --btn-bg: #333; --op-bg: #bb8c20; --eq-bg: #388e3c;
+      --bg: #121212; --fg: #eee;
+      --btn: #333; --btn-op: #bb8c20; --btn-eq: #388e3c; --btn-clear: #b71c1c;
     }
-    [data-theme="pastel"] {
-      --bg: #fdf6e3; --fg: #657b83; --btn-bg: #eee8d5; --op-bg: #b58900; --eq-bg: #2aa198;
+    body {
+      margin:0; padding:0;
+      width:100vw; height:100vh;
+      background:var(--bg); color:var(--fg);
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
     }
-    [data-theme="mono"] {
-      --bg: #fafafa; --fg: #333; --btn-bg: #ccc; --op-bg: #999; --eq-bg: #666;
+    .container {
+      max-width:360px; height:100%; margin:0 auto;
+      display:flex; flex-direction:column;
     }
-    html,body{margin:0;padding:0;width:100vw;height:100vh;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;}
-    .container{max-width:360px;margin:0 auto;height:100%;display:flex;flex-direction:column;}
-    .top{position:relative;padding:12px;border-bottom:1px solid #888;}
-    .settings-btn{position:absolute;top:12px;right:12px;font-size:24px;background:none;border:none;color:var(--fg);cursor:pointer;}
-    .row{display:flex;align-items:center;margin:8px 0;}
-    select {flex:1;padding:6px;font-size:16px;}
-    .rate{flex:1;font-size:24px;font-weight:700;text-align:right;}
-    .stamp{text-align:center;font-size:12px;color:var(--fg);opacity:0.7;}
-    .keypad{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px;}
-    .keypad button{padding:16px;font-size:20px;border:none;border-radius:8px;background:var(--btn-bg);color:var(--fg);cursor:pointer;}
-    .keypad button.op{background:var(--op-bg);color:#fff;}
-    .keypad button.eq{background:var(--eq-bg);color:#fff;grid-column:span 2;}
+    .top {
+      position:relative;
+      border-bottom:1px solid #ddd;
+      padding:12px 8px 0;
+    }
+    .settings-btn {
+      position:absolute;
+      top:12px; right:8px;
+      background:none; border:none;
+      font-size:24px; color:var(--fg);
+      cursor:pointer;
+    }
+    .rate-panel {
+      display:flex; align-items:center;
+      padding:8px 0;
+      border-top:1px solid #eee;
+    }
+    .rate-panel:first-of-type { border-top:none; }
+    .flag { font-size:32px; margin-right:8px; }
+    .code { font-size:20px; color:#555; flex:1; }
+    .amount { font-size:24px; font-weight:700; }
+    .stamp {
+      text-align:center; color:#888;
+      font-size:14px; margin:4px 0;
+    }
+    .keypad {
+      flex:1; display:grid;
+      grid-template-columns:repeat(4,1fr);
+      grid-template-rows:repeat(5,1fr);
+      gap:8px; padding:12px;
+      box-sizing:border-box;
+    }
+    .keypad button {
+      font-size:20px; border:none; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; background:var(--btn); color:var(--fg);
+    }
+    .keypad button[data-action="clear"] {
+      background:var(--btn-clear); color:#fff;
+    }
+    .keypad button[data-action="back"],
+    .keypad button[data-action="swap"],
+    .keypad button[data-action="decimal"] {
+      background:#ccc;
+    }
+    .keypad button[data-action="divide"],
+    .keypad button[data-action="multiply"],
+    .keypad button[data-action="minus"],
+    .keypad button[data-action="plus"] {
+      background:var(--btn-op); color:#fff;
+    }
+    .keypad button[data-action="equal"] {
+      background:var(--btn-eq); color:#fff;
+      grid-column:span 2; font-size:22px;
+    }
   </style>
 </head>
 <body data-theme="">
   <div class="container">
     <div class="top">
-      <button class="settings-btn" onclick="location='settings.html'">⚙</button>
-      <div class="row">
-        <select id="base"></select>
-        <div class="rate" id="val1">0</div>
+      <button class="settings-btn" title="설정" onclick="location='settings.html'">⚙️</button>
+      <div class="rate-panel">
+        <span id="flag1" class="flag">🇺🇸</span>
+        <span id="code1" class="code">USD</span>
+        <span id="value1" class="amount">0</span>
       </div>
-      <div class="row">
-        <select id="target"></select>
-        <div class="rate" id="val2">0</div>
+      <div class="rate-panel">
+        <span id="flag2" class="flag">🇰🇷</span>
+        <span id="code2" class="code">KRW</span>
+        <span id="value2" class="amount">0</span>
       </div>
-      <div class="stamp" id="time">조회 시간: --</div>
-      <div class="stamp" id="unit">1 = --</div>
+      <div id="rateTime" class="stamp">조회 시간: --</div>
+      <div id="unitRate" class="stamp">1 USD = -- KRW</div>
     </div>
-    <div class="keypad" id="pad">
-      <button data-key="C">C</button><button data-key="←">←</button>
-      <button data-action="swap">🔄</button><button class="op" data-op="/">÷</button>
-      <button data-key="7">7</button><button data-key="8">8</button>
-      <button data-key="9">9</button><button class="op" data-op="*">×</button>
-      <button data-key="4">4</button><button data-key="5">5</button>
-      <button data-key="6">6</button><button class="op" data-op="-">−</button>
-      <button data-key="1">1</button><button data-key="2">2</button>
-      <button data-key="3">3</button><button class="op" data-op="+">＋</button>
-      <button data-key="0">0</button><button data-key=".">.</button>
-      <button class="eq" data-action="calc">＝</button>
+    <div class="keypad" id="keypad">
+      <button data-action="clear">C</button>
+      <button data-action="back">←</button>
+      <button data-action="swap">🔄</button>
+      <button data-action="divide">÷</button>
+      <button data-key="7">7</button>
+      <button data-key="8">8</button>
+      <button data-key="9">9</button>
+      <button data-action="multiply">×</button>
+      <button data-key="4">4</button>
+      <button data-key="5">5</button>
+      <button data-key="6">6</button>
+      <button data-action="minus">−</button>
+      <button data-key="1">1</button>
+      <button data-key="2">2</button>
+      <button data-key="3">3</button>
+      <button data-action="plus">＋</button>
+      <button data-key="0">0</button>
+      <button data-action="decimal">.</button>
+      <button data-action="equal">＝</button>
     </div>
   </div>
 
   <script>
-    const pad=document.getElementById('pad'),
-          baseSel=document.getElementById('base'),
-          tgtSel=document.getElementById('target'),
-          v1=document.getElementById('val1'),
-          v2=document.getElementById('val2'),
-          tm=document.getElementById('time'),
-          ut=document.getElementById('unit'),
-          body=document.body;
+  (function(){
+    const flags = {
+      KRW:'🇰🇷', USD:'🇺🇸', EUR:'🇪🇺', JPY:'🇯🇵',
+      CNY:'🇨🇳', VND:'🇻🇳', THB:'🇹🇭', PHP:'🇵🇭',
+      RUB:'🇷🇺', HKD:'🇭🇰'
+    };
+    const f1 = document.getElementById('flag1'),
+          f2 = document.getElementById('flag2'),
+          c1 = document.getElementById('code1'),
+          c2 = document.getElementById('code2'),
+          v1 = document.getElementById('value1'),
+          v2 = document.getElementById('value2'),
+          rt = document.getElementById('rateTime'),
+          ur = document.getElementById('unitRate'),
+          kb = document.getElementById('keypad'),
+          body = document.body;
 
-    let expr='';
+    let expr = '';
+
     function fmt(n){
       return Number(n).toLocaleString();
     }
-    function update1(){ v1.textContent=expr||'0'; }
 
-    async function convert(){
+    function updateDisplay(){
+      v1.innerText = expr || '0';
+    }
+
+    async function fetchAndConvert(){
       let amt;
-      try{ amt=eval(expr||'0'); }
-      catch{ amt=0; }
-      amt=isNaN(amt)?0:amt;
-      const f=baseSel.value, t=tgtSel.value;
-      // 직접 설정된 환율 우선
-      const custom=localStorage.getItem('customRate');
-      const res= await fetch(`https://api.frankfurter.app/latest?from=${f}&to=${t}`);
-      const js=await res.json();
-      const rate=custom?Number(custom):js.rates[t];
-      tm.textContent='조회 시간: '+new Date().toLocaleString();
-      ut.textContent=`1 ${f} = ${ (t==='KRW'?Math.round(rate):rate.toFixed(6)).toLocaleString() } ${t}`;
-      v2.textContent=fmt(amt*rate);
+      try{ amt = eval(expr||'0'); }
+      catch{ amt = 0; }
+      if(isNaN(amt)) amt=0;
+
+      const from = c1.innerText, to = c2.innerText;
+      // 사용자 환율 우선
+      const custom = localStorage.getItem('customRate');
+      let rate;
+      if(custom && from==='USD' && to==='KRW'){
+        rate = Number(custom);
+      } else {
+        const res = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+        const js  = await res.json();
+        rate = js.rates[to];
+      }
+
+      rt.innerText = '조회 시간: ' + new Date().toLocaleString();
+      ur.innerText = `1 ${from} = ${
+        to==='KRW'? Math.round(rate).toLocaleString(): rate.toFixed(6)
+      } ${to}`;
+
+      const result = amt * rate;
+      v2.innerText = fmt(result);
     }
 
-    function initCurs(){
-      // 통화 목록
-      ['KRW','USD','EUR','JPY','CNY','VND','THB','PHP','RUB','HKD'].forEach(c=>{
-        [baseSel,tgtSel].forEach(sel=>{
-          const opt=new Option(c,c);
-          sel.add(opt);
-        });
-      });
-      baseSel.value='USD'; tgtSel.value='KRW';
-      baseSel.onchange=convert;
-      tgtSel.onchange=convert;
+    function init(){
+      // 통화 설정
+      const base  = localStorage.getItem('base')   || 'USD';
+      const target= localStorage.getItem('target') || 'KRW';
+      c1.innerText = base; f1.innerText = flags[base];
+      c2.innerText = target; f2.innerText = flags[target];
+
       // 테마
-      const theme=localStorage.getItem('theme')||'';
-      body.dataset.theme=theme;
+      const th = localStorage.getItem('theme')||'';
+      if(th) body.dataset.theme = th;
     }
 
-    pad.addEventListener('click',e=>{
-      const k=e.target.dataset.key,
-            a=e.target.dataset.action,
-            o=e.target.dataset.op;
+    kb.addEventListener('click', e=>{
+      if(e.target.tagName!=='BUTTON') return;
+      const k = e.target.dataset.key,
+            a = e.target.dataset.action;
+
       if(k!=null){
-        if(k==='C'){ expr=''; v2.textContent='0'; ut.textContent='1 = --'; tm.textContent='조회 시간: --'; }
-        else if(k==='←'){ expr=expr.slice(0,-1); }
-        else { expr+=k; }
-        update1();
-      } else if(o){
-        expr+=o; update1();
-      } else if(a==='swap'){
-        [baseSel.value,tgtSel.value]=[tgtSel.value,baseSel.value];
-        convert();
-        expr=''; update1();
-      } else if(a==='calc'){
-        convert();
+        if(k==='C'){
+          expr=''; v2.innerText='0';
+          rt.innerText='조회 시간: --';
+          ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
+        }
+        else if(k==='←'){ expr = expr.slice(0,-1); }
+        else { expr += k; }
+        updateDisplay();
+      }
+      else if(a==='divide'||a==='multiply'||a==='minus'||a==='plus'){
+        expr += e.target.textContent;
+        updateDisplay();
+      }
+      else if(a==='swap'){
+        // 기본/목적 교환
+        const t=c1.innerText; c1.innerText=c2.innerText; c2.innerText=t;
+        f1.innerText = flags[c1.innerText];
+        f2.innerText = flags[c2.innerText];
+        localStorage.setItem('base', c1.innerText);
+        localStorage.setItem('target', c2.innerText);
+        expr=''; updateDisplay();
+        rt.innerText='조회 시간: --';
+        ur.innerText=`1 ${c1.innerText} = -- ${c2.innerText}`;
+        fetchAndConvert();
+      }
+      else if(a==='equal'){
+        fetchAndConvert();
       }
     });
 
-    window.onload=()=>{
-      initCurs();
-      update1();
-      convert();
+    window.onload = ()=>{
+      init();
+      updateDisplay();
+      fetchAndConvert();
     };
+  })();
   </script>
 </body>
 </html>
