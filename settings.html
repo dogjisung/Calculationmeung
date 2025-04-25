@@ -2,60 +2,74 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>환율계산 설정</title>
   <style>
-    body { margin:0; padding:16px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; }
-    .back-btn { font-size:24px; cursor:pointer; display:inline-block; margin-bottom:24px; }
-    .section { margin-bottom:32px; }
-    label { display:block; margin-bottom:8px; font-weight:500; }
-    input { width:100%; padding:8px; font-size:16px; box-sizing:border-box; }
-    button { margin-right:12px; margin-top:12px; padding:8px 16px; font-size:16px; cursor:pointer; }
+    body{margin:0;padding:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto;background:#f9f9f9;}
+    .back{cursor:pointer;font-size:24px;margin-bottom:24px;display:inline-block;}
+    .section{margin-bottom:32px;}
+    label{display:block;margin-bottom:8px;font-weight:500;}
+    select,input{width:100%;padding:8px;font-size:16px;box-sizing:border-box;margin-bottom:8px;}
+    button{margin-right:12px;padding:8px 16px;font-size:16px;cursor:pointer;}
   </style>
 </head>
 <body>
-  <!-- 1) 뒤로가기 버튼 -->
-  <div>
-    <span id="goBack" class="back-btn">← 뒤로</span>
-  </div>
+  <div class="back" onclick="history.back()">← 뒤로</div>
 
-  <!-- (기본·목적 통화 설정 UI는 그대로 두시거나 추후 추가) -->
-
-  <!-- 2) 직접 환율 입력 섹션 -->
   <div class="section">
-    <label for="customRate">직접 환율 입력 (1 USD → KRW)</label>
-    <input id="customRate" type="number" step="0.000001" placeholder="예) 1422" />
-    <div>
-      <button id="saveRate">저장하기</button>
-      <button id="clearRate">초기화</button>
-    </div>
+    <label>① 기본 통화</label>
+    <select id="baseSel"></select>
+  </div>
+  <div class="section">
+    <label>② 목적 통화</label>
+    <select id="tgtSel"></select>
+  </div>
+  <div class="section">
+    <label>③ 테마 선택</label>
+    <select id="themeSel">
+      <option value="">기본</option>
+      <option value="dark">다크</option>
+      <option value="pastel">파스텔</option>
+      <option value="mono">모노</option>
+    </select>
+  </div>
+  <div class="section">
+    <label>④ 직접 환율 입력 (1 USD → KRW)</label>
+    <input id="customRate" type="number" step="0.000001" placeholder="예) 1422"/>
+    <button id="saveRate">저장</button>
+    <button id="clearRate">초기화</button>
   </div>
 
   <script>
-    // 뒤로가기
-    document.getElementById('goBack').onclick = () => history.back();
+    const BASE = localStorage.getItem('base')||'USD';
+    const TGT  = localStorage.getItem('target')||'KRW';
+    const TH   = localStorage.getItem('theme')||'';
+    const CR   = localStorage.getItem('customRate')||'';
 
-    const inp = document.getElementById('customRate');
-    // 저장된 값 불러오기
-    const saved = localStorage.getItem('customRate');
-    if (saved) inp.value = saved;
+    const baseSel = document.getElementById('baseSel'),
+          tgtSel  = document.getElementById('tgtSel'),
+          themeSel= document.getElementById('themeSel'),
+          customIn= document.getElementById('customRate');
 
-    // 저장 버튼
-    document.getElementById('saveRate').onclick = () => {
-      const v = inp.value;
-      if (v && !isNaN(v) && Number(v)>0) {
-        localStorage.setItem('customRate', v);
-        alert('직접 환율이 저장되었습니다.');
-        history.back();
-      } else {
-        alert('올바른 환율을 입력해주세요.');
-      }
+    ['KRW','USD','EUR','JPY','CNY','VND','THB','PHP','RUB','HKD'].forEach(c=>{
+      [baseSel,tgtSel].forEach(sel=>{
+        const o=new Option(c,c);
+        sel.add(o);
+      });
+    });
+    baseSel.value=BASE; tgtSel.value=TGT;
+    themeSel.value=TH; customIn.value=CR;
+
+    document.getElementById('saveRate').onclick = ()=>{
+      localStorage.setItem('base', baseSel.value);
+      localStorage.setItem('target', tgtSel.value);
+      localStorage.setItem('theme', themeSel.value);
+      if(customIn.value) localStorage.setItem('customRate', customIn.value);
+      alert('설정이 저장되었습니다.'); history.back();
     };
-
-    // 초기화 버튼
-    document.getElementById('clearRate').onclick = () => {
+    document.getElementById('clearRate').onclick = ()=>{
       localStorage.removeItem('customRate');
-      inp.value = '';
+      customIn.value='';
       alert('사용자 환율 설정이 초기화되었습니다.');
     };
   </script>
