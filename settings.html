@@ -41,31 +41,37 @@
   </div>
 
   <script>
-    const BASE = localStorage.getItem('base')||'USD';
-    const TGT  = localStorage.getItem('target')||'KRW';
-    const TH   = localStorage.getItem('theme')||'';
-    const CR   = localStorage.getItem('customRate')||'';
-
+    const CODES = ['KRW','USD','EUR','JPY','CNY','VND','THB','PHP','RUB','HKD'];
     const baseSel = document.getElementById('baseSel'),
           tgtSel  = document.getElementById('tgtSel'),
           themeSel= document.getElementById('themeSel'),
           customIn= document.getElementById('customRate');
 
-    ['KRW','USD','EUR','JPY','CNY','VND','THB','PHP','RUB','HKD'].forEach(c=>{
+    // 로컬스토리지 값
+    const BASE = localStorage.getItem('base')   || 'USD';
+    const TGT  = localStorage.getItem('target') || 'KRW';
+    const TH   = localStorage.getItem('theme')  || '';
+    const CR   = localStorage.getItem('customRate')||'';
+
+    // 통화 목록 채우기
+    CODES.forEach(c=>{
       [baseSel,tgtSel].forEach(sel=>{
-        const o=new Option(c,c);
-        sel.add(o);
+        const opt = new Option(c,c);
+        sel.add(opt);
       });
     });
-    baseSel.value=BASE; tgtSel.value=TGT;
-    themeSel.value=TH; customIn.value=CR;
+    baseSel.value=BASE;
+    tgtSel.value =TGT;
+    themeSel.value=TH;
+    customIn.value=CR;
 
     document.getElementById('saveRate').onclick = ()=>{
       localStorage.setItem('base', baseSel.value);
       localStorage.setItem('target', tgtSel.value);
       localStorage.setItem('theme', themeSel.value);
       if(customIn.value) localStorage.setItem('customRate', customIn.value);
-      alert('설정이 저장되었습니다.'); history.back();
+      alert('설정이 저장되었습니다.');
+      history.back();
     };
     document.getElementById('clearRate').onclick = ()=>{
       localStorage.removeItem('customRate');
