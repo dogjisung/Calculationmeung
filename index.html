@@ -6,183 +6,255 @@
   <title>환율 계산기</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; }
-    body { background: #111; color: #fff; font-family: 'Segoe UI', sans-serif; width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw; overflow: hidden; }
-    .container {
-      width: 100vw;
-      height: 100vh;
-      min-height: 100vh;
-      min-width: 100vw;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: #111;
-      box-sizing: border-box;
-      padding: 0;
-      margin: 0;
-    }
-    .currency-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 90vw;
-      max-width: 400px;
-      margin-bottom: 12px;
-    }
-    .currency-label {
-      display: flex;
-      align-items: center;
-      font-size: 1.1em;
-    }
-    .currency-label img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      margin-right: 8px;
-      transition: 0.2s;
-    }
-    .calc-display {
-      width: 90vw;
-      max-width: 400px;
-      font-size: 2em;
+    body {
       background: #222;
       color: #fff;
-      border: none;
-      text-align: right;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 10px;
+      font-family: 'Segoe UI', sans-serif;
+      width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw;
+      overflow: hidden;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+    }
+    .container {
+      width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw;
+      display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+      background: #222;
       box-sizing: border-box;
+      padding: 0; margin: 0;
+    }
+    .currency-block {
+      width: 100vw; max-width: 480px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #333;
+      padding: 18px 0 10px 0;
+    }
+    .currency-row {
+      width: 90vw; max-width: 400px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 0 0 8px 0;
+    }
+    .currency-label {
+      display: flex; align-items: center; font-size: 1.2em;
+    }
+    .currency-label img {
+      width: 36px; height: 36px; border-radius: 50%; margin-right: 12px;
+    }
+    .currency-value {
+      font-size: 2em; font-weight: bold; letter-spacing: 1px;
+    }
+    .swap-btn {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: #ff9800; color: #fff; border: none;
+      font-size: 2em; margin: 8px 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .swap-btn:active { background: #ffa726; }
+    .rate-info {
+      width: 90vw; max-width: 400px;
+      text-align: center; color: #aaa; font-size: 1.1em; margin: 8px 0 0 0;
+    }
+    .calc-area {
+      flex: 1;
+      width: 100vw; max-width: 480px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      background: #222;
+      padding-bottom: 10px;
     }
     .calc-buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      width: 90vw;
-      max-width: 400px;
-      margin-bottom: 10px;
+      width: 90vw; max-width: 400px;
+      margin: 0 auto;
     }
     .calc-btn {
-      font-size: 1.2em;
-      padding: 14px 0;
-      border: none;
-      border-radius: 8px;
-      background: #444;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
+      font-size: 1.3em; padding: 18px 0;
+      border: none; border-radius: 8px;
+      background: #444; color: #fff;
+      cursor: pointer; transition: background 0.2s;
     }
     .calc-btn:active { background: #555; }
     .op { background: #ff9800; color: #fff; }
     .op:active { background: #ffa726; }
-    .swap-btn {
-      width: 90vw;
-      max-width: 400px;
-      background: #1976d2;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1em;
-      padding: 10px 0;
-      margin: 8px 0 0 0;
-      cursor: pointer;
-      transition: background 0.2s;
+    .eq { background: #43a047; color: #fff; }
+    .eq:active { background: #66bb6a; }
+    .calc-display {
+      width: 90vw; max-width: 400px;
+      font-size: 2em; background: #222; color: #fff;
+      border: none; text-align: right; padding: 10px;
+      border-radius: 8px; margin-bottom: 10px; box-sizing: border-box;
     }
-    .swap-btn:hover { background: #2196f3; }
-    .rate-info {
-      width: 90vw;
-      max-width: 400px;
-      text-align: right;
-      color: #aaa;
-      font-size: 1em;
-      margin-top: 8px;
+    @media (max-width: 500px) {
+      .currency-block, .calc-area, .rate-info, .calc-display, .calc-buttons { max-width: 100vw; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="currency-row">
-      <div class="currency-label" id="from-currency-label">
-        <img id="from-flag" src="https://flagcdn.com/us.svg" alt="USD">
-        <span id="from-code">USD</span>
+    <div class="currency-block" id="currency-block">
+      <div class="currency-row" id="row-from">
+        <div class="currency-label">
+          <img id="from-flag" src="https://flagcdn.com/ca.svg" alt="CAD">
+          <span id="from-code">CAD</span>
+        </div>
+        <div class="currency-value" id="from-value">0</div>
       </div>
-      <div class="currency-label" id="to-currency-label">
-        <img id="to-flag" src="https://flagcdn.com/kr.svg" alt="KRW">
-        <span id="to-code">KRW</span>
+      <div class="currency-row" id="row-to">
+        <div class="currency-label">
+          <img id="to-flag" src="https://flagcdn.com/us.svg" alt="USD">
+          <span id="to-code">USD</span>
+        </div>
+        <div class="currency-value" id="to-value">0</div>
+      </div>
+      <button class="swap-btn" onclick="swapCurrency()">&#8595;&#8593;</button>
+      <div class="rate-info" id="rate-info">1 CAD = 0.72 USD</div>
+    </div>
+    <div class="calc-area">
+      <input class="calc-display" id="calc-display" value="0" readonly />
+      <div class="calc-buttons">
+        <button class="calc-btn" onclick="clearAll()">C</button>
+        <button class="calc-btn" onclick="backspace()">&larr;</button>
+        <button class="calc-btn" onclick="swapCurrency()">&#8595;&#8593;</button>
+        <button class="calc-btn op" onclick="pressOp('/')">÷</button>
+        <button class="calc-btn" onclick="pressNum('7')">7</button>
+        <button class="calc-btn" onclick="pressNum('8')">8</button>
+        <button class="calc-btn" onclick="pressNum('9')">9</button>
+        <button class="calc-btn op" onclick="pressOp('*')">×</button>
+        <button class="calc-btn" onclick="pressNum('4')">4</button>
+        <button class="calc-btn" onclick="pressNum('5')">5</button>
+        <button class="calc-btn" onclick="pressNum('6')">6</button>
+        <button class="calc-btn op" onclick="pressOp('-')">-</button>
+        <button class="calc-btn" onclick="pressNum('1')">1</button>
+        <button class="calc-btn" onclick="pressNum('2')">2</button>
+        <button class="calc-btn" onclick="pressNum('3')">3</button>
+        <button class="calc-btn op" onclick="pressOp('+')">+</button>
+        <button class="calc-btn" onclick="pressNum('0')">0</button>
+        <button class="calc-btn" onclick="pressDot()">.</button>
+        <button class="calc-btn" onclick="pressPercent()">%</button>
+        <button class="calc-btn eq" onclick="calculate()">=</button>
       </div>
     </div>
-    <input class="calc-display" id="calc-display" value="" readonly />
-    <div class="calc-buttons">
-      <button class="calc-btn" onclick="press('7')">7</button>
-      <button class="calc-btn" onclick="press('8')">8</button>
-      <button class="calc-btn" onclick="press('9')">9</button>
-      <button class="calc-btn op" onclick="press('/')">÷</button>
-      <button class="calc-btn" onclick="press('4')">4</button>
-      <button class="calc-btn" onclick="press('5')">5</button>
-      <button class="calc-btn" onclick="press('6')">6</button>
-      <button class="calc-btn op" onclick="press('*')">×</button>
-      <button class="calc-btn" onclick="press('1')">1</button>
-      <button class="calc-btn" onclick="press('2')">2</button>
-      <button class="calc-btn" onclick="press('3')">3</button>
-      <button class="calc-btn op" onclick="press('-')">-</button>
-      <button class="calc-btn" onclick="press('0')">0</button>
-      <button class="calc-btn" onclick="press('.')">.</button>
-      <button class="calc-btn" onclick="clearDisplay()">C</button>
-      <button class="calc-btn op" onclick="press('+')">+</button>
-      <button class="calc-btn" style="grid-column: span 4; background:#43a047;" onclick="calculate()">= 환율계산</button>
-    </div>
-    <button class="swap-btn" onclick="swapCurrency()">↑↓ 통화 전환</button>
-    <div class="rate-info" id="rate-info">1 USD = 1,438 KRW</div>
   </div>
   <script>
-    // 환율 정보
-    let rate = 1438;
-    let from = { code: 'USD', flag: 'https://flagcdn.com/us.svg', name: 'USD' };
-    let to = { code: 'KRW', flag: 'https://flagcdn.com/kr.svg', name: 'KRW' };
+    // 환율 정보 (예시)
+    let rates = {
+      'CADUSD': 0.72,
+      'USDCAD': 1/0.72,
+      'USDKRW': 1438,
+      'KRWUSD': 1/1438,
+      'CADKRW': 1040,
+      'KRWCAD': 1/1040
+    };
+    let from = { code: 'CAD', flag: 'https://flagcdn.com/ca.svg' };
+    let to = { code: 'USD', flag: 'https://flagcdn.com/us.svg' };
+    let input = '0';
+    let operator = '';
+    let operand = '';
+    let justCalculated = false;
 
-    const display = document.getElementById('calc-display');
-    const fromFlag = document.getElementById('from-flag');
-    const toFlag = document.getElementById('to-flag');
-    const fromCode = document.getElementById('from-code');
-    const toCode = document.getElementById('to-code');
-    const rateInfo = document.getElementById('rate-info');
+    function getRate() {
+      return rates[from.code + to.code] || 1;
+    }
 
-    function press(val) {
-      if (display.value.length > 20) return;
-      display.value += val;
+    function updateUI() {
+      document.getElementById('from-flag').src = from.flag;
+      document.getElementById('from-code').textContent = from.code;
+      document.getElementById('to-flag').src = to.flag;
+      document.getElementById('to-code').textContent = to.code;
+      document.getElementById('calc-display').value = input;
+      let fromValue = parseFloat(input) || 0;
+      let rate = getRate();
+      let toValue = fromValue * rate;
+      document.getElementById('from-value').textContent = input;
+      document.getElementById('to-value').textContent = (fromValue ? toValue.toLocaleString('en-US', {maximumFractionDigits: 6}) : '0');
+      document.getElementById('rate-info').textContent = `1 ${from.code} = ${rate.toLocaleString('en-US', {maximumFractionDigits: 6})} ${to.code}`;
     }
-    function clearDisplay() {
-      display.value = '';
-    }
-    function calculate() {
-      let expr = display.value.replace(/÷/g, '/').replace(/×/g, '*');
-      let result = 0;
-      try {
-        result = eval(expr);
-      } catch {
-        display.value = 'Error';
-        return;
-      }
-      if (from.code === 'USD' && to.code === 'KRW') {
-        display.value = formatNumber(Math.round(result * rate));
-      } else {
-        display.value = formatNumber((result / rate).toFixed(2));
-      }
-    }
+
     function swapCurrency() {
-      // Swap currency info
       [from, to] = [to, from];
-      fromFlag.src = from.flag;
-      toFlag.src = to.flag;
-      fromCode.textContent = from.code;
-      toCode.textContent = to.code;
-      rateInfo.textContent = `1 ${from.code} = ${formatNumber(rate)} ${to.code}`;
-      clearDisplay();
+      input = '0';
+      operator = '';
+      operand = '';
+      justCalculated = false;
+      updateUI();
     }
-    function formatNumber(num) {
-      if (isNaN(num)) return 'Error';
-      return Number(num).toLocaleString('en-US');
+
+    function clearAll() {
+      input = '0';
+      operator = '';
+      operand = '';
+      justCalculated = false;
+      updateUI();
     }
+
+    function backspace() {
+      if (justCalculated) {
+        input = '0';
+        justCalculated = false;
+      } else {
+        input = input.length > 1 ? input.slice(0, -1) : '0';
+      }
+      updateUI();
+    }
+
+    function pressNum(n) {
+      if (justCalculated) {
+        input = n;
+        justCalculated = false;
+      } else {
+        if (input === '0') input = n;
+        else input += n;
+      }
+      updateUI();
+    }
+
+    function pressDot() {
+      if (justCalculated) {
+        input = '0.';
+        justCalculated = false;
+      } else if (!input.includes('.')) {
+        input += '.';
+      }
+      updateUI();
+    }
+
+    function pressOp(op) {
+      if (operator && operand) {
+        calculate();
+        operand = input;
+      } else {
+        operand = input;
+      }
+      operator = op;
+      input = '0';
+      justCalculated = false;
+    }
+
+    function pressPercent() {
+      input = (parseFloat(input) / 100).toString();
+      updateUI();
+    }
+
+    function calculate() {
+      let result = 0;
+      let a = parseFloat(operand) || 0;
+      let b = parseFloat(input) || 0;
+      switch (operator) {
+        case '+': result = a + b; break;
+        case '-': result = a - b; break;
+        case '*': result = a * b; break;
+        case '/': result = b !== 0 ? a / b : 0; break;
+        default: result = b;
+      }
+      input = result.toString();
+      operator = '';
+      operand = '';
+      justCalculated = true;
+      updateUI();
+    }
+
+    // 최초 UI 세팅
+    updateUI();
   </script>
 </body>
 </html>
