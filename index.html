@@ -49,6 +49,7 @@
       flex: 0 0 22%;
       min-height: 0;
       justify-content: stretch;
+      margin-top: 2.5vh; /* 파란색 영역 살짝 아래로 */
     }
     .currency-row {
       width: 100%;
@@ -59,6 +60,7 @@
       padding: 0 24px;
       box-sizing: border-box;
       flex: 1 1 0;
+      position: relative;
     }
     .currency-label {
       display: flex;
@@ -73,8 +75,15 @@
       margin-right: 12px;
       flex-shrink: 0;
     }
+    .currency-value-wrap {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      justify-content: flex-end;
+      flex: 1;
+    }
     .currency-value {
-      font-size: 1.35em; /* 폰트 크기 줄임 */
+      font-size: 1.35em;
       font-weight: bold;
       letter-spacing: 1px;
       text-align: right;
@@ -86,6 +95,18 @@
       margin-left: 10px;
       direction: ltr;
       line-height: 1.1;
+    }
+    .formula-inline {
+      color: #bbb;
+      font-size: 0.95em;
+      margin-left: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+      max-width: 40vw;
+      font-family: 'Segoe UI', 'monospace', sans-serif;
+      vertical-align: middle;
+      display: inline-block;
     }
     .currency-divider {
       width: 100%;
@@ -106,19 +127,7 @@
       min-height: 0;
       padding: 0;
       margin: 0;
-    }
-    .formula-bar {
-      width: 100vw;
-      max-width: 480px;
-      min-height: 28px;
-      color: #bbb;
-      font-size: 1em;
-      text-align: right;
-      padding: 4px 24px 0 24px;
-      box-sizing: border-box;
-      overflow: hidden;
-      white-space: nowrap;
-      font-family: 'Segoe UI', 'monospace', sans-serif;
+      margin-top: -2vh; /* 빨간색 영역 살짝 위로 */
     }
     .calc-buttons {
       display: grid;
@@ -127,7 +136,7 @@
       gap: 0;
       width: 100vw;
       max-width: 480px;
-      height: calc(100vh - 22vh - 56px - 44px); /* 22vh: currency, 56px: formula+여유, 44px: footer */
+      height: calc(100vh - 22vh - 56px - 44px);
       min-height: 320px;
       margin: 0 auto;
       padding: 0;
@@ -186,8 +195,8 @@
     @media (max-width: 500px) {
       .currency-block, .calc-area, .calc-buttons, .footer-bar { max-width: 100vw; }
       .currency-row { padding-left: 10px; padding-right: 10px; }
-      .formula-bar { padding-left: 10px; padding-right: 10px; }
       .currency-value { max-width: 70vw; }
+      .formula-inline { max-width: 30vw; }
     }
   </style>
 </head>
@@ -199,7 +208,10 @@
           <img id="from-flag" src="https://flagcdn.com/us.svg" alt="USD">
           <span id="from-code">USD</span>
         </div>
-        <div class="currency-value" id="from-value">0</div>
+        <div class="currency-value-wrap">
+          <span class="currency-value" id="from-value">0</span>
+          <span class="formula-inline" id="formula-inline"></span>
+        </div>
       </div>
       <div class="currency-divider"></div>
       <div class="currency-row" id="row-to">
@@ -211,7 +223,6 @@
       </div>
     </div>
     <div class="calc-area">
-      <div class="formula-bar" id="formula-bar"></div>
       <div class="calc-buttons">
         <button class="calc-btn" onclick="clearAll()">C</button>
         <button class="calc-btn" onclick="backspace()">&larr;</button>
@@ -271,7 +282,7 @@
       let rate = getRate();
       let toValue = fromValue * rate;
       document.getElementById('to-value').textContent = (fromValue ? toValue.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0');
-      document.getElementById('formula-bar').textContent = formula;
+      document.getElementById('formula-inline').textContent = formula;
       updateFooter();
     }
 
