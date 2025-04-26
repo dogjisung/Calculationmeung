@@ -25,12 +25,12 @@
       width: 100vw; max-width: 480px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       background: #333;
-      padding: 18px 0 10px 0;
+      padding: 10px 0;
     }
     .currency-row {
       width: 90vw; max-width: 400px;
       display: flex; align-items: center; justify-content: space-between;
-      margin: 0 0 8px 0;
+      margin: 0 0 5px 0;
     }
     .currency-label {
       display: flex; align-items: center; font-size: 1.2em;
@@ -44,7 +44,7 @@
     .swap-btn {
       width: 60px; height: 60px; border-radius: 50%;
       background: #ff9800; color: #fff; border: none;
-      font-size: 2em; margin: 8px 0; cursor: pointer;
+      font-size: 2em; margin: 5px 0; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s;
     }
@@ -137,17 +137,6 @@
         navigator.serviceWorker.register('/sw.js')
           .then(registration => {
             console.log('ServiceWorker registration successful');
-            
-            // 새로운 버전이 있는지 확인
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // 새 버전이 설치되었을 때 페이지 새로고침
-                  window.location.reload();
-                }
-              });
-            });
           })
           .catch(err => {
             console.log('ServiceWorker registration failed: ', err);
