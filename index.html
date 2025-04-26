@@ -16,22 +16,23 @@
     }
     .container {
       width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw;
-      display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
       background: #222;
       box-sizing: border-box;
       padding: 0; margin: 0;
     }
     .currency-block {
       width: 90vw; max-width: 400px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
       background: #333;
-      padding: 18px 0 10px 0;
+      padding: 18px 0 0 0;
       border-radius: 0 0 18px 18px;
     }
     .currency-row {
       width: 100%;
       display: flex; align-items: center; justify-content: space-between;
-      margin: 0 0 8px 0;
+      margin: 0 0 0 0;
+      min-height: 48px;
     }
     .currency-label {
       display: flex; align-items: center; font-size: 1.2em;
@@ -42,19 +43,18 @@
     .currency-value {
       font-size: 2em; font-weight: bold; letter-spacing: 1px;
     }
-    .swap-btn {
-      width: 60px; height: 60px; border-radius: 50%;
-      background: #ff9800; color: #fff; border: none;
-      font-size: 2em; margin: 8px 0; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
+    .currency-divider {
+      width: 100%;
+      height: 2px;
+      background: #444;
+      margin: 0 0 0 0;
     }
-    .swap-btn:active { background: #ffa726; }
     .calc-area {
       width: 90vw; max-width: 400px;
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
       background: transparent;
       margin: 0; padding: 0;
+      flex: 1;
     }
     .calc-buttons {
       display: grid;
@@ -62,6 +62,7 @@
       gap: 8px;
       width: 100%;
       margin: 0 auto;
+      flex: 1;
     }
     .calc-btn {
       font-size: 1.3em; padding: 18px 0;
@@ -89,6 +90,7 @@
         </div>
         <div class="currency-value" id="from-value">0</div>
       </div>
+      <div class="currency-divider"></div>
       <div class="currency-row" id="row-to">
         <div class="currency-label">
           <img id="to-flag" src="https://flagcdn.com/us.svg" alt="USD">
@@ -96,7 +98,6 @@
         </div>
         <div class="currency-value" id="to-value">0</div>
       </div>
-      <button class="swap-btn" onclick="swapCurrency()">&#8595;&#8593;</button>
     </div>
     <div class="calc-area">
       <div class="calc-buttons">
