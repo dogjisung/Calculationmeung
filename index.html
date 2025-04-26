@@ -49,13 +49,12 @@
       flex: 0 0 22%;
       min-height: 0;
       justify-content: stretch;
-      margin-top: 2.5vh;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      margin-top: 0.5vh; /* 더 위로 */
     }
     .currency-row {
       width: 100%;
       display: flex;
-      align-items: center;
+      align-items: flex-start; /* 위로 붙임 */
       justify-content: space-between;
       min-height: 0;
       padding: 0 24px;
@@ -66,14 +65,14 @@
     .currency-label {
       display: flex;
       align-items: center;
-      font-size: 1.1em;
+      font-size: 1.25em;
       min-width: 0;
     }
     .currency-label img {
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      margin-right: 12px;
+      margin-right: 14px;
       flex-shrink: 0;
     }
     .currency-value-wrap {
@@ -82,10 +81,10 @@
       min-width: 0;
       justify-content: flex-end;
       flex: 1;
-      height: 56px;
+      height: 64px;
     }
     .currency-value {
-      font-size: 1.5em;
+      font-size: 2em;
       font-weight: bold;
       letter-spacing: 1px;
       text-align: right;
@@ -103,8 +102,8 @@
     }
     .formula-inline {
       color: #bbb;
-      font-size: 1.1em;
-      margin-left: 10px;
+      font-size: 1.2em;
+      margin-left: 12px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: clip;
@@ -133,7 +132,7 @@
       min-height: 0;
       padding: 0;
       margin: 0;
-      margin-top: -2vh;
+      margin-top: -1.5vh; /* 더 위로 */
     }
     .calc-buttons {
       display: grid;
@@ -142,7 +141,7 @@
       gap: 0;
       width: 100vw;
       max-width: 480px;
-      height: calc(100vh - 22vh - 56px - 44px);
+      height: calc(100vh - 22vh - 64px - 44px);
       min-height: 320px;
       margin: 0 auto;
       padding: 0;
@@ -265,10 +264,7 @@
     };
     let from = { code: 'USD', flag: 'https://flagcdn.com/us.svg' };
     let to = { code: 'KRW', flag: 'https://flagcdn.com/kr.svg' };
-    let input = '0';
-    let operator = '';
-    let operand = '';
-    let justCalculated = false;
+    let input = '';
     let formulaArr = []; // 수식 배열
 
     // 최대 입력 가능 숫자 (999,999,999,999,999)
@@ -279,140 +275,135 @@
     }
 
     function updateUI() {
+      // 메인 숫자(마지막 입력이 숫자면 그 값, 아니면 직전 숫자)
+      let mainValue = getMainValue();
       document.getElementById('from-flag').src = from.flag;
       document.getElementById('from-code').textContent = from.code;
       document.getElementById('to-flag').src = to.flag;
       document.getElementById('to-code').textContent = to.code;
-      document.getElementById('from-value').textContent = input.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      let fromValue = parseFloat(input) || 0;
+      document.getElementById('from-value').textContent = mainValue.replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0';
+      let fromValue = parseFloat(mainValue) || 0;
       let rate = getRate();
       let toValue = fromValue * rate;
       document.getElementById('to-value').textContent = (fromValue ? toValue.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0');
-      // 수식 표기 (숫자-연산자-숫자-연산자... 순서대로)
       document.getElementById('formula-inline').innerHTML = getFormulaInline();
       updateFooter();
+    }
+
+    function getMainValue() {
+      // 마지막이 숫자면 그 값, 연산자면 직전 숫자
+      if (formulaArr.length === 0) return '0';
+      if (typeof formulaArr[formulaArr.length - 1] === 'string' && !isOperator(formulaArr[formulaArr.length - 1])) {
+        return formulaArr[formulaArr.length - 1];
+      }
+      for (let i = formulaArr.length - 1; i >= 0; i--) {
+        if (!isOperator(formulaArr[i])) return formulaArr[i];
+      }
+      return '0';
     }
 
     function getFormulaInline() {
       if (formulaArr.length === 0) return '';
       let html = '';
       for (let i = 0; i < formulaArr.length; i++) {
-        if (i % 2 === 0) {
-          // 숫자: 흰색, 굵게
-          html += `<span style="color:#fff;font-weight:bold;">${Number(formulaArr[i]).toLocaleString('en-US')}</span>`;
-        } else {
-          // 연산자: 연한 회색
+        if (i === formulaArr.length - 1 && !isOperator(formulaArr[i])) continue; // 마지막 숫자는 메인 숫자에만
+        if (isOperator(formulaArr[i])) {
           let op = formulaArr[i];
           if (op === '*') op = '×';
           if (op === '/') op = '÷';
           html += `<span style="color:#bbb;font-weight:normal;">${op}</span>`;
+        } else {
+          html += `<span style="color:#fff;font-weight:bold;">${Number(formulaArr[i]).toLocaleString('en-US')}</span>`;
         }
       }
       return html;
     }
 
+    function isOperator(val) {
+      return ['+', '-', '*', '/'].includes(val);
+    }
+
     function swapCurrency() {
       [from, to] = [to, from];
-      input = '0';
-      operator = '';
-      operand = '';
-      justCalculated = false;
+      input = '';
       formulaArr = [];
       updateUI();
     }
 
     function clearAll() {
-      input = '0';
-      operator = '';
-      operand = '';
-      justCalculated = false;
+      input = '';
       formulaArr = [];
       updateUI();
     }
 
     function backspace() {
-      if (justCalculated) {
-        input = '0';
-        justCalculated = false;
-        formulaArr = [];
+      if (formulaArr.length === 0) {
+        input = '';
       } else {
-        input = input.length > 1 ? input.slice(0, -1) : '0';
+        let last = formulaArr[formulaArr.length - 1];
+        if (!isOperator(last)) {
+          if (last.length > 1) {
+            formulaArr[formulaArr.length - 1] = last.slice(0, -1);
+          } else {
+            formulaArr.pop();
+          }
+        } else {
+          formulaArr.pop();
+        }
       }
       updateUI();
     }
 
     function pressNum(n) {
-      if (justCalculated) {
-        input = n;
-        justCalculated = false;
-        formulaArr = [];
+      if (formulaArr.length === 0 || isOperator(formulaArr[formulaArr.length - 1])) {
+        formulaArr.push(n);
       } else {
-        if (input === '0') input = n;
-        else {
-          let next = input + n;
-          if (next.replace(/\D/g, '').length > 15) return;
-          if (parseFloat(next.replace(/,/g, '')) > MAX_NUMBER) return;
-          input = next;
-        }
-      }
-      // 마지막이 숫자가 아니면 새로 추가, 숫자면 교체
-      if (formulaArr.length === 0 || typeof formulaArr[formulaArr.length - 1] !== 'string') {
-        formulaArr[formulaArr.length - 1] = input;
-      } else {
-        formulaArr.push(input);
+        let next = formulaArr[formulaArr.length - 1] + n;
+        if (next.replace(/\D/g, '').length > 15) return;
+        if (parseFloat(next.replace(/,/g, '')) > MAX_NUMBER) return;
+        formulaArr[formulaArr.length - 1] = next;
       }
       updateUI();
     }
 
     function pressDot() {
-      if (justCalculated) {
-        input = '0.';
-        justCalculated = false;
-        formulaArr = [];
-      } else if (!input.includes('.')) {
-        input += '.';
-      }
-      if (formulaArr.length === 0 || typeof formulaArr[formulaArr.length - 1] !== 'string') {
-        formulaArr[formulaArr.length - 1] = input;
-      } else {
-        formulaArr.push(input);
+      if (formulaArr.length === 0 || isOperator(formulaArr[formulaArr.length - 1])) {
+        formulaArr.push('0.');
+      } else if (!formulaArr[formulaArr.length - 1].includes('.')) {
+        formulaArr[formulaArr.length - 1] += '.';
       }
       updateUI();
     }
 
     function pressOp(op) {
-      // 연산자 연속 입력 방지
-      if (formulaArr.length === 0) {
-        formulaArr.push(input);
-      }
-      if (typeof formulaArr[formulaArr.length - 1] === 'string') {
+      if (formulaArr.length === 0) return;
+      if (isOperator(formulaArr[formulaArr.length - 1])) {
         formulaArr[formulaArr.length - 1] = op;
       } else {
         formulaArr.push(op);
       }
-      operator = op;
-      operand = input;
-      input = '0';
-      justCalculated = false;
       updateUI();
     }
 
     function pressPercent() {
-      input = (parseFloat(input) / 100).toString();
-      if (formulaArr.length === 0 || typeof formulaArr[formulaArr.length - 1] !== 'string') {
-        formulaArr[formulaArr.length - 1] = input;
-      } else {
-        formulaArr.push(input);
+      if (formulaArr.length === 0 || isOperator(formulaArr[formulaArr.length - 1])) return;
+      let val = parseFloat(formulaArr[formulaArr.length - 1]);
+      if (!isNaN(val)) {
+        formulaArr[formulaArr.length - 1] = (val / 100).toString();
       }
       updateUI();
     }
 
     function calculate() {
-      // 수식 계산
+      if (formulaArr.length === 0) return;
+      // 마지막이 연산자면 제거
+      if (isOperator(formulaArr[formulaArr.length - 1])) {
+        formulaArr.pop();
+      }
       let exp = '';
       for (let i = 0; i < formulaArr.length; i++) {
         let v = formulaArr[i];
-        if (typeof v === 'string' && ['+', '-', '*', '/'].includes(v)) {
+        if (isOperator(v)) {
           exp += v;
         } else {
           exp += (parseFloat(v) || 0);
@@ -424,11 +415,7 @@
       } catch (e) {
         result = 0;
       }
-      input = result.toString();
-      operator = '';
-      operand = '';
-      justCalculated = true;
-      formulaArr = [input];
+      formulaArr = [result.toString()];
       updateUI();
     }
 
