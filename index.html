@@ -16,23 +16,21 @@
     }
     .container {
       width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
       background: #222;
       box-sizing: border-box;
       padding: 0; margin: 0;
     }
     .currency-block {
-      width: 90vw; max-width: 400px;
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      width: 100vw; max-width: 480px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
       background: #333;
-      padding: 18px 0 0 0;
-      border-radius: 0 0 18px 18px;
+      padding: 18px 0 10px 0;
     }
     .currency-row {
-      width: 100%;
+      width: 90vw; max-width: 400px;
       display: flex; align-items: center; justify-content: space-between;
-      margin: 0 0 0 0;
-      min-height: 48px;
+      margin: 0 0 8px 0;
     }
     .currency-label {
       display: flex; align-items: center; font-size: 1.2em;
@@ -43,26 +41,27 @@
     .currency-value {
       font-size: 2em; font-weight: bold; letter-spacing: 1px;
     }
-    .currency-divider {
-      width: 100%;
-      height: 2px;
-      background: #444;
-      margin: 0 0 0 0;
+    .swap-btn {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: #ff9800; color: #fff; border: none;
+      font-size: 2em; margin: 8px 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
     }
+    .swap-btn:active { background: #ffa726; }
     .calc-area {
-      width: 90vw; max-width: 400px;
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-      background: transparent;
-      margin: 0; padding: 0;
       flex: 1;
+      width: 100vw; max-width: 480px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      background: #222;
+      padding-bottom: 10px;
     }
     .calc-buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      width: 100%;
+      width: 90vw; max-width: 400px;
       margin: 0 auto;
-      flex: 1;
     }
     .calc-btn {
       font-size: 1.3em; padding: 18px 0;
@@ -75,8 +74,14 @@
     .op:active { background: #ffa726; }
     .eq { background: #43a047; color: #fff; }
     .eq:active { background: #66bb6a; }
+    .calc-display {
+      width: 90vw; max-width: 400px;
+      font-size: 2em; background: #222; color: #fff;
+      border: none; text-align: right; padding: 10px;
+      border-radius: 8px; margin-bottom: 10px; box-sizing: border-box;
+    }
     @media (max-width: 500px) {
-      .currency-block, .calc-area, .calc-buttons { max-width: 100vw; }
+      .currency-block, .calc-area, .calc-display, .calc-buttons { max-width: 100vw; }
     }
   </style>
 </head>
@@ -90,7 +95,6 @@
         </div>
         <div class="currency-value" id="from-value">0</div>
       </div>
-      <div class="currency-divider"></div>
       <div class="currency-row" id="row-to">
         <div class="currency-label">
           <img id="to-flag" src="https://flagcdn.com/us.svg" alt="USD">
@@ -98,8 +102,10 @@
         </div>
         <div class="currency-value" id="to-value">0</div>
       </div>
+      <button class="swap-btn" onclick="swapCurrency()">&#8595;&#8593;</button>
     </div>
     <div class="calc-area">
+      <input class="calc-display" id="calc-display" value="0" readonly />
       <div class="calc-buttons">
         <button class="calc-btn" onclick="clearAll()">C</button>
         <button class="calc-btn" onclick="backspace()">&larr;</button>
@@ -125,6 +131,30 @@
     </div>
   </div>
   <script>
+    // Service Worker 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful');
+            
+            // 새로운 버전이 있는지 확인
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // 새 버전이 설치되었을 때 페이지 새로고침
+                  window.location.reload();
+                }
+              });
+            });
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+
     // 환율 정보 (예시)
     let rates = {
       'CADUSD': 0.72,
@@ -150,6 +180,7 @@
       document.getElementById('from-code').textContent = from.code;
       document.getElementById('to-flag').src = to.flag;
       document.getElementById('to-code').textContent = to.code;
+      document.getElementById('calc-display').value = input;
       let fromValue = parseFloat(input) || 0;
       let rate = getRate();
       let toValue = fromValue * rate;
