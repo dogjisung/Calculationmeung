@@ -5,83 +5,147 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>환율 계산기</title>
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
     body {
       background: #222;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
-      width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw;
+      width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      min-width: 100vw;
       overflow: hidden;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
     .container {
-      width: 100vw; height: 100vh; min-height: 100vh; min-width: 100vw;
-      display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+      width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      min-width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+      align-items: center;
       background: #222;
       box-sizing: border-box;
-      padding: 0; margin: 0;
+      padding: 0;
+      margin: 0;
     }
     .currency-block {
-      width: 100vw; max-width: 480px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 100vw;
+      max-width: 480px;
       background: #333;
-      padding: 10px 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      border-radius: 0 0 18px 18px;
+      flex: 0 0 28%;
+      min-height: 0;
+      justify-content: stretch;
     }
     .currency-row {
-      width: 90vw; max-width: 400px;
-      display: flex; align-items: center; justify-content: space-between;
-      margin: 0 0 5px 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 0;
+      padding: 0 24px;
+      box-sizing: border-box;
+      flex: 1 1 0;
     }
     .currency-label {
-      display: flex; align-items: center; font-size: 1.2em;
+      display: flex;
+      align-items: center;
+      font-size: 1.1em;
+      min-width: 0;
     }
     .currency-label img {
-      width: 36px; height: 36px; border-radius: 50%; margin-right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      margin-right: 12px;
+      flex-shrink: 0;
     }
     .currency-value {
-      font-size: 2em; font-weight: bold; letter-spacing: 1px;
+      font-size: 2.1em;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 55%;
+      min-width: 0;
+      margin-left: 10px;
     }
-    .swap-btn {
-      width: 60px; height: 60px; border-radius: 50%;
-      background: #ff9800; color: #fff; border: none;
-      font-size: 2em; margin: 5px 0; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
+    .currency-divider {
+      width: 100%;
+      height: 3px;
+      background: #444;
+      margin: 0;
+      flex: 0 0 3px;
     }
-    .swap-btn:active { background: #ffa726; }
     .calc-area {
-      flex: 1;
-      width: 100vw; max-width: 480px;
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      width: 100vw;
+      max-width: 480px;
       background: #222;
-      padding-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: stretch;
+      flex: 1 1 72%;
+      min-height: 0;
+      padding: 0;
+      margin: 0;
     }
     .calc-buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      width: 90vw; max-width: 400px;
+      grid-template-rows: repeat(5, 1fr);
+      gap: 0;
+      width: 100vw;
+      max-width: 480px;
+      height: 100%;
       margin: 0 auto;
+      padding: 0;
+      flex: 1 1 100%;
     }
     .calc-btn {
-      font-size: 1.3em; padding: 18px 0;
-      border: none; border-radius: 8px;
-      background: #444; color: #fff;
-      cursor: pointer; transition: background 0.2s;
+      font-size: 1.3em;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: #444;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 500;
+      outline: none;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
     }
     .calc-btn:active { background: #555; }
-    .op { background: #ff9800; color: #fff; }
-    .op:active { background: #ffa726; }
-    .eq { background: #43a047; color: #fff; }
-    .eq:active { background: #66bb6a; }
-    .calc-display {
-      width: 90vw; max-width: 400px;
-      font-size: 2em; background: #222; color: #fff;
-      border: none; text-align: right; padding: 10px;
-      border-radius: 8px; margin-bottom: 10px; box-sizing: border-box;
+    .op, .eq {
+      background: #ff9800;
+      color: #fff;
+    }
+    .op:active, .eq:active {
+      background: #ffa726;
     }
     @media (max-width: 500px) {
-      .currency-block, .calc-area, .calc-display, .calc-buttons { max-width: 100vw; }
+      .currency-block, .calc-area, .calc-buttons { max-width: 100vw; }
+      .currency-row { padding-left: 10px; padding-right: 10px; }
     }
   </style>
 </head>
@@ -90,26 +154,25 @@
     <div class="currency-block" id="currency-block">
       <div class="currency-row" id="row-from">
         <div class="currency-label">
-          <img id="from-flag" src="https://flagcdn.com/ca.svg" alt="CAD">
-          <span id="from-code">CAD</span>
+          <img id="from-flag" src="https://flagcdn.com/us.svg" alt="USD">
+          <span id="from-code">USD</span>
         </div>
         <div class="currency-value" id="from-value">0</div>
       </div>
+      <div class="currency-divider"></div>
       <div class="currency-row" id="row-to">
         <div class="currency-label">
-          <img id="to-flag" src="https://flagcdn.com/us.svg" alt="USD">
-          <span id="to-code">USD</span>
+          <img id="to-flag" src="https://flagcdn.com/kr.svg" alt="KRW">
+          <span id="to-code">KRW</span>
         </div>
         <div class="currency-value" id="to-value">0</div>
       </div>
-      <button class="swap-btn" onclick="swapCurrency()">&#8595;&#8593;</button>
     </div>
     <div class="calc-area">
-      <input class="calc-display" id="calc-display" value="0" readonly />
       <div class="calc-buttons">
         <button class="calc-btn" onclick="clearAll()">C</button>
         <button class="calc-btn" onclick="backspace()">&larr;</button>
-        <button class="calc-btn" onclick="swapCurrency()">&#8595;&#8593;</button>
+        <button class="calc-btn" onclick="swapCurrency()">&#8597;</button>
         <button class="calc-btn op" onclick="pressOp('/')">÷</button>
         <button class="calc-btn" onclick="pressNum('7')">7</button>
         <button class="calc-btn" onclick="pressNum('8')">8</button>
@@ -131,30 +194,13 @@
     </div>
   </div>
   <script>
-    // Service Worker 등록
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => {
-            console.log('ServiceWorker registration successful');
-          })
-          .catch(err => {
-            console.log('ServiceWorker registration failed: ', err);
-          });
-      });
-    }
-
     // 환율 정보 (예시)
     let rates = {
-      'CADUSD': 0.72,
-      'USDCAD': 1/0.72,
       'USDKRW': 1438,
-      'KRWUSD': 1/1438,
-      'CADKRW': 1040,
-      'KRWCAD': 1/1040
+      'KRWUSD': 1/1438
     };
-    let from = { code: 'CAD', flag: 'https://flagcdn.com/ca.svg' };
-    let to = { code: 'USD', flag: 'https://flagcdn.com/us.svg' };
+    let from = { code: 'USD', flag: 'https://flagcdn.com/us.svg' };
+    let to = { code: 'KRW', flag: 'https://flagcdn.com/kr.svg' };
     let input = '0';
     let operator = '';
     let operand = '';
@@ -169,12 +215,11 @@
       document.getElementById('from-code').textContent = from.code;
       document.getElementById('to-flag').src = to.flag;
       document.getElementById('to-code').textContent = to.code;
-      document.getElementById('calc-display').value = input;
+      document.getElementById('from-value').textContent = input.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       let fromValue = parseFloat(input) || 0;
       let rate = getRate();
       let toValue = fromValue * rate;
-      document.getElementById('from-value').textContent = input;
-      document.getElementById('to-value').textContent = (fromValue ? toValue.toLocaleString('en-US', {maximumFractionDigits: 6}) : '0');
+      document.getElementById('to-value').textContent = (fromValue ? toValue.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0');
     }
 
     function swapCurrency() {
@@ -264,4 +309,4 @@
     updateUI();
   </script>
 </body>
-</html> 
+</html>
