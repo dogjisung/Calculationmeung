@@ -46,7 +46,7 @@
       display: flex;
       flex-direction: column;
       border-radius: 0 0 18px 18px;
-      flex: 0 0 32%; /* 더 크게 */
+      flex: 0 0 30%;
       min-height: 0;
       justify-content: stretch;
       margin-top: 0;
@@ -91,8 +91,8 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: clip;
-      min-width: 80px;
-      max-width: 120px;
+      min-width: 110px;
+      max-width: 110px;
       margin-left: 10px;
       direction: ltr;
       line-height: 1.1;
@@ -128,12 +128,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      flex: 1 1 60%; /* 더 작게 */
+      justify-content: flex-end;
+      flex: 1 1 60%;
       min-height: 0;
       padding: 0;
       margin: 0;
-      margin-top: -1.5vh;
     }
     .calc-buttons {
       display: grid;
@@ -212,7 +211,7 @@
     @media (max-width: 500px) {
       .currency-block, .calc-area, .calc-buttons, .footer-bar { max-width: 100vw; }
       .currency-row { padding-left: 10px; padding-right: 10px; }
-      .currency-value { max-width: 80px; }
+      .currency-value { max-width: 110px; min-width: 110px; }
       .formula-inline { max-width: 30vw; }
     }
   </style>
@@ -439,17 +438,19 @@
       const d = now.getDate();
       let h = now.getHours();
       const min = now.getMinutes().toString().padStart(2, '0');
+      const sec = now.getSeconds().toString().padStart(2, '0');
       const isPM = h >= 12;
       if (h > 12) h -= 12;
       if (h === 0) h = 12;
+      // 항상 현재 시간(분)과 맞게
       const timeStr = `${y}/${m}/${d} ${isPM ? '오후' : '오전'} ${h}:${min}`;
       document.getElementById('date-time').textContent = timeStr;
       document.getElementById('rate-info').textContent = `1 ${from.code} = ${getRate().toLocaleString('en-US', {maximumFractionDigits: 3})} ${to.code}`;
     }
 
-    // 최초 UI 세팅 및 1분마다 하단 갱신
+    // 최초 UI 세팅 및 1초마다 하단 갱신
     updateUI();
-    setInterval(updateFooter, 60000);
+    setInterval(updateFooter, 1000);
   </script>
 </body>
 </html>
