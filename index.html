@@ -49,7 +49,8 @@
       flex: 0 0 22%;
       min-height: 0;
       justify-content: stretch;
-      margin-top: 2.5vh; /* 파란색 영역 살짝 아래로 */
+      margin-top: 2.5vh;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     .currency-row {
       width: 100%;
@@ -77,36 +78,41 @@
     }
     .currency-value-wrap {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       min-width: 0;
       justify-content: flex-end;
       flex: 1;
+      height: 56px;
     }
     .currency-value {
-      font-size: 1.35em;
+      font-size: 1.5em;
       font-weight: bold;
       letter-spacing: 1px;
       text-align: right;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: clip;
-      max-width: 60vw;
+      max-width: 50vw;
       min-width: 0;
       margin-left: 10px;
       direction: ltr;
       line-height: 1.1;
+      color: #fff;
+      display: inline-block;
+      vertical-align: bottom;
     }
     .formula-inline {
       color: #bbb;
-      font-size: 0.95em;
-      margin-left: 12px;
+      font-size: 1.1em;
+      margin-left: 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: clip;
       max-width: 40vw;
       font-family: 'Segoe UI', 'monospace', sans-serif;
-      vertical-align: middle;
+      vertical-align: bottom;
       display: inline-block;
+      line-height: 1.1;
     }
     .currency-divider {
       width: 100%;
@@ -127,7 +133,7 @@
       min-height: 0;
       padding: 0;
       margin: 0;
-      margin-top: -2vh; /* 빨간색 영역 살짝 위로 */
+      margin-top: -2vh;
     }
     .calc-buttons {
       display: grid;
@@ -195,7 +201,7 @@
     @media (max-width: 500px) {
       .currency-block, .calc-area, .calc-buttons, .footer-bar { max-width: 100vw; }
       .currency-row { padding-left: 10px; padding-right: 10px; }
-      .currency-value { max-width: 70vw; }
+      .currency-value { max-width: 60vw; }
       .formula-inline { max-width: 30vw; }
     }
   </style>
@@ -263,7 +269,7 @@
     let operator = '';
     let operand = '';
     let justCalculated = false;
-    let formula = '';
+    let formulaArr = []; // 수식 배열
 
     // 최대 입력 가능 숫자 (999,999,999,999,999)
     const MAX_NUMBER = 999_999_999_999_999;
@@ -282,8 +288,27 @@
       let rate = getRate();
       let toValue = fromValue * rate;
       document.getElementById('to-value').textContent = (fromValue ? toValue.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0');
-      document.getElementById('formula-inline').textContent = formula;
+      // 수식 표기 (숫자-연산자-숫자-연산자... 순서대로)
+      document.getElementById('formula-inline').innerHTML = getFormulaInline();
       updateFooter();
+    }
+
+    function getFormulaInline() {
+      if (formulaArr.length === 0) return '';
+      let html = '';
+      for (let i = 0; i < formulaArr.length; i++) {
+        if (i % 2 === 0) {
+          // 숫자: 흰색, 굵게
+          html += `<span style="color:#fff;font-weight:bold;">${Number(formulaArr[i]).toLocaleString('en-US')}</span>`;
+        } else {
+          // 연산자: 연한 회색
+          let op = formulaArr[i];
+          if (op === '*') op = '×';
+          if (op === '/') op = '÷';
+          html += `<span style="color:#bbb;font-weight:normal;">${op}</span>`;
+        }
+      }
+      return html;
     }
 
     function swapCurrency() {
@@ -292,7 +317,7 @@
       operator = '';
       operand = '';
       justCalculated = false;
-      formula = '';
+      formulaArr = [];
       updateUI();
     }
 
@@ -301,7 +326,7 @@
       operator = '';
       operand = '';
       justCalculated = false;
-      formula = '';
+      formulaArr = [];
       updateUI();
     }
 
@@ -309,7 +334,7 @@
       if (justCalculated) {
         input = '0';
         justCalculated = false;
-        formula = '';
+        formulaArr = [];
       } else {
         input = input.length > 1 ? input.slice(0, -1) : '0';
       }
@@ -320,16 +345,21 @@
       if (justCalculated) {
         input = n;
         justCalculated = false;
-        formula = '';
+        formulaArr = [];
       } else {
         if (input === '0') input = n;
         else {
           let next = input + n;
-          // 입력 제한: 15자리(999,999,999,999,999)까지
           if (next.replace(/\D/g, '').length > 15) return;
           if (parseFloat(next.replace(/,/g, '')) > MAX_NUMBER) return;
           input = next;
         }
+      }
+      // 마지막이 숫자가 아니면 새로 추가, 숫자면 교체
+      if (formulaArr.length === 0 || typeof formulaArr[formulaArr.length - 1] !== 'string') {
+        formulaArr[formulaArr.length - 1] = input;
+      } else {
+        formulaArr.push(input);
       }
       updateUI();
     }
@@ -338,62 +368,67 @@
       if (justCalculated) {
         input = '0.';
         justCalculated = false;
-        formula = '';
+        formulaArr = [];
       } else if (!input.includes('.')) {
         input += '.';
+      }
+      if (formulaArr.length === 0 || typeof formulaArr[formulaArr.length - 1] !== 'string') {
+        formulaArr[formulaArr.length - 1] = input;
+      } else {
+        formulaArr.push(input);
       }
       updateUI();
     }
 
     function pressOp(op) {
-      if (operator && operand) {
-        calculate();
-        operand = input;
+      // 연산자 연속 입력 방지
+      if (formulaArr.length === 0) {
+        formulaArr.push(input);
+      }
+      if (typeof formulaArr[formulaArr.length - 1] === 'string') {
+        formulaArr[formulaArr.length - 1] = op;
       } else {
-        operand = input;
+        formulaArr.push(op);
       }
       operator = op;
+      operand = input;
       input = '0';
       justCalculated = false;
-      // 수식 표시
-      let opSymbol = op === '/' ? '÷' : op === '*' ? '×' : op;
-      if (formula === '') {
-        formula = operand.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + opSymbol;
-      } else {
-        // 연속 연산 지원
-        if (/[+\-×÷]$/.test(formula)) {
-          formula = formula.slice(0, -1) + opSymbol;
-        } else {
-          formula += opSymbol;
-        }
-      }
       updateUI();
     }
 
     function pressPercent() {
       input = (parseFloat(input) / 100).toString();
+      if (formulaArr.length === 0 || typeof formulaArr[formulaArr.length - 1] !== 'string') {
+        formulaArr[formulaArr.length - 1] = input;
+      } else {
+        formulaArr.push(input);
+      }
       updateUI();
     }
 
     function calculate() {
+      // 수식 계산
+      let exp = '';
+      for (let i = 0; i < formulaArr.length; i++) {
+        let v = formulaArr[i];
+        if (typeof v === 'string' && ['+', '-', '*', '/'].includes(v)) {
+          exp += v;
+        } else {
+          exp += (parseFloat(v) || 0);
+        }
+      }
       let result = 0;
-      let a = parseFloat(operand) || 0;
-      let b = parseFloat(input) || 0;
-      switch (operator) {
-        case '+': result = a + b; break;
-        case '-': result = a - b; break;
-        case '*': result = a * b; break;
-        case '/': result = b !== 0 ? a / b : 0; break;
-        default: result = b;
+      try {
+        result = eval(exp);
+      } catch (e) {
+        result = 0;
       }
       input = result.toString();
       operator = '';
       operand = '';
       justCalculated = true;
-      // 수식 완성
-      if (formula) {
-        formula += input.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      }
+      formulaArr = [input];
       updateUI();
     }
 
