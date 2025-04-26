@@ -56,11 +56,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-height: 0;
       padding: 0 24px;
       box-sizing: border-box;
-      flex: 1 1 0;
-      position: relative;
+      height: 80px; /* 고정 높이로 두 행 동일하게 */
     }
     .currency-label {
       display: flex;
@@ -81,7 +79,7 @@
       min-width: 0;
       justify-content: flex-end;
       flex: 1;
-      height: 72px;
+      height: 100%;
     }
     .currency-value {
       font-size: 2.2em;
@@ -94,12 +92,14 @@
       min-width: 110px;
       max-width: 110px;
       margin-left: 10px;
+      margin-right: 0;
       direction: ltr;
       line-height: 1.1;
       color: #fff;
-      display: inline-block;
-      vertical-align: bottom;
-      text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
     }
     .formula-inline {
       color: #bbb;
@@ -235,7 +235,9 @@
           <img id="to-flag" src="https://flagcdn.com/kr.svg" alt="KRW">
           <span id="to-code">KRW</span>
         </div>
-        <div class="currency-value" id="to-value">0</div>
+        <div class="currency-value-wrap">
+          <span class="currency-value" id="to-value">0</span>
+        </div>
       </div>
     </div>
     <div class="calc-area">
